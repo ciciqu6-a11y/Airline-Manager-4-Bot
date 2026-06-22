@@ -2,31 +2,27 @@ name: Playwright Tests
 on:
   workflow_dispatch:
   schedule:
-    # PERBAIKAN 1: Menggunakan menit ganjil/tidak bulat agar lolos dari antrean jam sibuk global
-    - cron: "17,43 * * * *" 
+    - cron: "17,43 * * * *" # Menit ganjil sepi dari jam sibuk
 
 jobs:
   test:
     timeout-minutes: 15
     runs-on: ubuntu-22.04
     
-    # PERBAIKAN 2: Hak akses wajib agar GitHub CLI di akhir skrip bisa memperbarui status alur kerja
+    # Hak akses wajib agar bot bisa melakukan push commit ke dalam repositori
     permissions:
       contents: write
-      actions: write
 
     steps:
     - uses: actions/checkout@v4
 
-    # PERBAIKAN 3: Mengunci Node ke 22 untuk menghindari bug silent freeze ekstraksi ZIP pada lts/*
     - uses: actions/setup-node@v4
       with:
-        node-version: '22'
+        node-version: '22' # Aman dari bug freeze ekstraksi ZIP
 
     - name: Install dependencies
       run: npm ci
 
-    # PERBAIKAN 4: Mengambil angka versi bersih (tanpa teks "Version" dan spasi) agar cache valid
     - name: Get Playwright version
       id: pw-version
       run: echo "version=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
@@ -37,13 +33,11 @@ jobs:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
 
-    # PERBAIKAN 5: Matikan auto-update sistem Ubuntu agar tidak mengunci Disk I/O server
     - name: Disable Man-DB Auto-Update
       run: |
         sudo debconf-set-selections <<< "man-db man-db/auto-update boolean false"
         sudo dpkg-reconfigure man-db
 
-    # PERBAIKAN 6: Tambahkan alokasi RAM Node.js ekstra saat mengekstrak biner Chromium
     - name: Install Playwright Browsers
       env:
         NODE_OPTIONS: "--max-old-space-size=4096"
@@ -63,11 +57,21 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
 
-    # PERBAIKAN 7: Perintah resmi GitHub CLI untuk mereset masa tenggang 60 hari agar tetap aktif selamanya
-    - name: Anti Nonaktif Otomatis (GitHub CLI)
-      if: always() # Tetap dijalankan meskipun tes Playwright Anda berhasil ataupun gagal
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    # SOLUSI KOREKSI: Membuat aktivitas nyata sebulan sekali untuk mereset timer 60 hari GitHub
+    - name: Keepalive Via Auto Commit (Hanya Tanggal 1)
+      if: always()
       run: |
-        gh workflow enable playwright.yml
-
+        # Memeriksa apakah hari ini adalah tanggal 01
+        if [ "$(date +%d)" = "01" ]; then
+          echo "Hari ini tanggal 1, membuat aktivitas commit untuk mereset timer 60 hari GitHub..."
+          date > .github/keepalive_timestamp
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/keepalive_timestamp
+          # Tag [skip ci] wajib agar commit ini tidak memicu run tes baru secara berulang-ulang
+          git commit -m "chore: keepalive update [skip ci]" || exit 0
+          git push
+        else
+          echo "Bukan tanggal 1, melewati proses commit agar riwayat Git tetap bersih."
+        fi
+        
