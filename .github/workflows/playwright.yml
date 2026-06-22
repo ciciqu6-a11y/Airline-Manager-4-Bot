@@ -33,7 +33,7 @@ jobs:
     - name: Install Playwright browser
       if: steps.playwright-cache.outputs.cache-hit != 'true'
       run: npx playwright install chromium
-      timeout-minutes: 5
+      timeout-minutes: 100
 
     - name: Create .env file
       run: |
