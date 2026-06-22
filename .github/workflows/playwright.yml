@@ -5,7 +5,7 @@ on:
     - cron: "01,31 * * * *"
 jobs:
   test:
-    timeout-minutes: 10
+    timeout-minutes: 15 # Kembalikan ke angka aman yang rasional
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
@@ -17,9 +17,10 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    # PERBAIKAN 1: Mengambil angka versi saja (tanpa kata "Version" dan spasi)
     - name: Get Playwright version
       id: pw-version
-      run: echo "version=$(npx playwright --version)" >> $GITHUB_OUTPUT
+      run: echo "version=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
 
     - uses: actions/cache@v4
       id: playwright-cache
@@ -27,13 +28,21 @@ jobs:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
 
+    # PERBAIKAN 2: Matikan pembaruan database manual Ubuntu agar Disk I/O longgar
+    - name: Disable Man-DB Auto-Update
+      run: |
+        sudo debconf-set-selections <<< "man-db man-db/auto-update boolean false"
+        sudo dpkg-reconfigure man-db
+
     - name: Install Playwright system dependencies
       run: npx playwright install-deps chromium
 
+    # PERBAIKAN 3: Naikkan memori Node.js untuk menangani ekstraksi file besar
     - name: Install Playwright browser
       if: steps.playwright-cache.outputs.cache-hit != 'true'
+      env:
+        NODE_OPTIONS: "--max-old-space-size=4096"
       run: npx playwright install chromium
-      timeout-minutes: 100
 
     - name: Create .env file
       run: |
@@ -48,3 +57,4 @@ jobs:
 
     - name: Run Playwright tests
       run: npx playwright test
+      
