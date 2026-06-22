@@ -15,6 +15,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: Random Delay
+      run: |
+         DELAY=$(( RANDOM % 300 ))
+         echo "Menunggu $DELAY detik..."
+         sleep $DELAY
 
     - uses: actions/setup-node@v4
       with:
