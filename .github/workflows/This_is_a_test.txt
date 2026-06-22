@@ -1,0 +1,70 @@
+name: Playwright Tests
+on:
+  workflow_dispatch:
+  schedule:
+    # PERBAIKAN 1: Menggunakan menit ganjil/tidak bulat agar lolos dari antrean jam sibuk global
+    - cron: "17,43 * * * *" 
+
+jobs:
+  test:
+    timeout-minutes: 15
+    runs-on: ubuntu-22.04
+    
+    # PERBAIKAN 2: Hak akses wajib agar GitHub CLI di akhir skrip bisa memperbarui status alur kerja
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # PERBAIKAN 3: Mengunci Node ke 22 untuk menghindari bug silent freeze ekstraksi ZIP pada lts/*
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      run: npm ci
+
+    # PERBAIKAN 4: Mengambil angka versi bersih (tanpa teks "Version" dan spasi) agar cache valid
+    - name: Get Playwright version
+      id: pw-version
+      run: echo "version=$(npx playwright --version | awk '{print $2}')" >> $GITHUB_OUTPUT
+
+    - uses: actions/cache@v4
+      id: playwright-cache
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ steps.pw-version.outputs.version }}
+
+    # PERBAIKAN 5: Matikan auto-update sistem Ubuntu agar tidak mengunci Disk I/O server
+    - name: Disable Man-DB Auto-Update
+      run: |
+        sudo debconf-set-selections <<< "man-db man-db/auto-update boolean false"
+        sudo dpkg-reconfigure man-db
+
+    # PERBAIKAN 6: Tambahkan alokasi RAM Node.js ekstra saat mengekstrak biner Chromium
+    - name: Install Playwright Browsers
+      env:
+        NODE_OPTIONS: "--max-old-space-size=4096"
+      run: npx playwright install --with-deps chromium
+
+    - name: Create .env file
+      run: |
+        touch .env
+        echo "EMAIL=${{ secrets.EMAIL }}" >> .env
+        echo "PASSWORD=${{ secrets.PASSWORD }}" >> .env
+        echo "MAX_FUEL_PRICE=${{ vars.MAX_FUEL_PRICE }}" >> .env
+        echo "MAX_CO2_PRICE=${{ vars.MAX_CO2_PRICE }}" >> .env
+
+    - name: Run Playwright tests
+      run: npx playwright test
+
+    # PERBAIKAN 7: Perintah resmi GitHub CLI untuk mereset masa tenggang 60 hari agar tetap aktif selamanya
+    - name: Anti Nonaktif Otomatis (GitHub CLI)
+      if: always() # Tetap dijalankan meskipun tes Playwright Anda berhasil ataupun gagal
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh workflow enable "Playwright Tests"
+
