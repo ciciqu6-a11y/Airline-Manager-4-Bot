@@ -4,12 +4,46 @@ import { FuelUtils } from '../utils/fuel.utils';
 import { CampaignUtils } from '../utils/campaign.utils';
 import { FleetUtils } from '../utils/fleet.utils';
 import { MaintenanceUtils } from '../utils/maintenance.utils';
+import * as fs from 'fs';
+import * as path from 'path';
 
 require('dotenv').config();
 
 test('All Operations', async ({ page }) => {
   // Timeout 3 menit karena simulasi ketikan dan delay manusia butuh waktu lebih lama
   test.setTimeout(180000);
+
+  // ==============================================================
+  // ⏱️ LOGIKA AUTOMATIC KEEPALIVE LOG (.TXT) - HANYA 1X DI TANGGAL 1
+  // ==============================================================
+  const hariIni = new Date();
+  const tanggalUTC = hariIni.getUTCDate();
+
+  if (tanggalUTC === 1) {
+    const formatBulanIni = `${hariIni.getUTCFullYear()}-${String(hariIni.getUTCMonth() + 1).padStart(2, '0')}`;
+    const logFilePath = path.join(__dirname, '../last-commit.txt'); 
+
+    let sudahCommitBulanIni = false;
+
+    if (fs.existsSync(logFilePath)) {
+      const isiLog = fs.readFileSync(logFilePath, 'utf8');
+      if (isiLog.includes(formatBulanIni)) {
+        sudahCommitBulanIni = true;
+      }
+    }
+
+    if (!sudahCommitBulanIni) {
+      console.log(`[Keepalive] Sesi pertama Tanggal 1 terdeteksi. Menulis log baru untuk bulan: ${formatBulanIni}`);
+      const kontenLogBaru = `Last Successful Keepalive Commit: ${formatBulanIni} (Executed at: ${hariIni.toISOString()} WIB/UTC)\n`;
+      fs.writeFileSync(logFilePath, kontenLogBaru, 'utf8');
+      console.log("[Keepalive] File 'last-commit.txt' berhasil diperbarui. Langkah .yml akhir yang akan melakukan push.");
+    } else {
+      console.log(`[Keepalive] Bot sudah menulis log sukses untuk bulan ${formatBulanIni} pada sesi sebelumnya. Melewati pembaruan file agar git bersih.`);
+    }
+  } else {
+    console.log(`[Keepalive] Hari ini Tanggal ${tanggalUTC} UTC. Pembaruan log keepalive dilewati.`);
+  }
+  // ==============================================================
 
   // Variable Initialization
   const fuelUtils = new FuelUtils(page);
@@ -35,7 +69,7 @@ test('All Operations', async ({ page }) => {
   await generalUtils.login(page);
   await GeneralUtils.randomSleep(5000, 8000);
 
-  // ==================== DEFINISI FUNGSI MODUL (MENGGUNAKAN SELECTOR ASLI) ====================
+  // ==================== DEFINISI FUNGSI MODUL ====================
 
   const runFuel = async () => {
     console.log('[Task] Memulai Modul Bahan Bakar & CO2...');
@@ -72,7 +106,6 @@ test('All Operations', async ({ page }) => {
 
   const runCampaign = async () => {
     console.log('[Task] Memulai Modul Kampanye Pemasaran (Sebelum Depart)...');
-    // Menggunakan selector asli milikmu yang terbukti valid
     await GeneralUtils.humanClick(page, page.locator('div:nth-child(5) > #mapMaint > img'));
     await GeneralUtils.randomSleep(2500, 4500);
     
@@ -96,8 +129,6 @@ test('All Operations', async ({ page }) => {
   };
 
   // ==================== LOGIKA PENGACAKAN SEMI-STATIS ====================
-  // Sesuai saranmu: Fuel dan Maintenance diacak urutannya, tetapi Campaign & Depart dikunci di akhir.
-
   const initialTasks = [runFuel, runMaintenance];
 
   // Acak urutan antara Fuel atau Maintenance duluan
