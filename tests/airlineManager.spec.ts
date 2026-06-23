@@ -131,7 +131,8 @@ test('All Operations', async ({ page }) => {
 
   const runMaintenance = async () => {
     console.log('[Task] Memulai Modul Pemeliharaan & Perbaikan Pesawat...');
-    await GeneralUtils.humanClick(page, page.locator('#mapMaint').locator('img').nth(2)); 
+    // KEMBALI MENGGUNAKAN SELECTOR ASLI YANG TERBUKTI JALAN DI MAP
+    await GeneralUtils.humanClick(page, page.locator('div:nth-child(4) > #mapMaint > img'));
     await GeneralUtils.randomSleep(4000, 6000); 
 
     await maintenanceUtils.checkPlanes();
@@ -146,7 +147,8 @@ test('All Operations', async ({ page }) => {
 
   const runCampaign = async () => {
     console.log('[Task] Memulai Modul Kampanye Pemasaran...');
-    await GeneralUtils.humanClick(page, page.locator('#mapMaint > img').nth(3));
+    // KEMBALI MENGGUNAKAN SELECTOR ASLI YANG TERBUKTI JALAN DI MAP
+    await GeneralUtils.humanClick(page, page.locator('div:nth-child(5) > #mapMaint > img'));
     await GeneralUtils.randomSleep(3500, 5500);
     
     await campaignUtils.createCampaign();
@@ -227,3 +229,4 @@ test('All Operations', async ({ page }) => {
   // Menutup halaman dengan sinkronisasi async Promise yang bersih
   await page.close();
 });
+
