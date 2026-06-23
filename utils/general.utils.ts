@@ -28,6 +28,7 @@ export class GeneralUtils {
         const box = await locator.boundingBox();
         
         if (box) {
+            // Membidik area tengah tombol dengan variasi acak (25% hingga 75% dari lebar/tinggi)
             const x = box.x + box.width * (0.25 + Math.random() * 0.5);
             const y = box.y + box.height * (0.25 + Math.random() * 0.5);
             await page.mouse.move(x, y, { steps: 8 });
@@ -51,12 +52,12 @@ export class GeneralUtils {
         await GeneralUtils.humanClick(page, page.getByRole('button', { name: 'Log in' }));
         await GeneralUtils.randomSleep(1000, 2000);
 
-        // KOREKSI 1: Mengetik email satu per satu karakter dengan delay acak 50-150ms
+        // Mengetik email per karakter dengan dynamic delay
         await page.locator('#lEmail').click();
         await page.locator('#lEmail').pressSequentially(this.username, { delay: Math.floor(Math.random() * 100) + 50 });
         await GeneralUtils.randomSleep(600, 1500);
         
-        // Mengetik password dengan dynamic delay
+        // Mengetik password per karakter dengan dynamic delay
         await page.locator('#lPass').click();
         await page.locator('#lPass').pressSequentially(this.password, { delay: Math.floor(Math.random() * 100) + 50 });
         await GeneralUtils.randomSleep(1000, 2500);
@@ -65,4 +66,3 @@ export class GeneralUtils {
         console.log('Logged in successfully!');
     }
 }
-
