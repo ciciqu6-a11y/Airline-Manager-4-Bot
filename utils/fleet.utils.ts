@@ -20,9 +20,17 @@ export class FleetUtils {
 
             let departAll = this.page.locator('#departAll');
             
-            // Menggunakan humanClick alih-alih .click() biasa
-            await GeneralUtils.humanClick(this.page, departAll);
-            await GeneralUtils.randomSleep(2000, 4000); // Jeda acak antar kloter terbang
+            // KOREKSI 4: Tunggu respons API rute penerbangan asli selesai diproses jaringan
+            await Promise.all([
+                this.page.waitForResponse(response => 
+                    response.url().includes('route') && response.status() === 200, 
+                    { timeout: 10000 }
+                ).catch(() => console.log('Timeout waiting for API, doing fallback sleep')),
+                GeneralUtils.humanClick(this.page, departAll)
+            ]);
+
+            // Tambahkan jeda santai manusia pasca-klik (proses berpikir/animasi)
+            await GeneralUtils.randomSleep(1500, 3000);
             
             const cantDepartPlane = await this.page.getByText('×Unable to departSome A/C was').isVisible();
             if(cantDepartPlane)
