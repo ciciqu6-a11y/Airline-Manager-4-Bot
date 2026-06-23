@@ -2,7 +2,7 @@
 
 This repository contains a bot for Airline Manager 4, built with Playwright and scheduled to run on GitHub Actions. The bot is designed to run every hour at 01 and 31 minutes but the schedule can be changed according to preference.
 ## Features
-
+- improved anti ban logic
 ### Implemented
 - Start an eco-friendly campaign if not already started.
 - Start a campaign to increase airline reputation.
@@ -37,4 +37,5 @@ This repository contains a bot for Airline Manager 4, built with Playwright and 
 - Trigger times may vary due to heavy loads on GitHub Actions.
 - To change the schedule, edit the **cron** expression under **schedule** in `.github/workflows/playwright.yml`. Use [crontab.guru](https://crontab.guru/) to generate your desired cron expression.
 - If you don't want your repo to be public you can clone this project and commit it to your private repo.
+- if you want your action always run on time use cron-job.org and remove cron inside yml
 - For questions, reach out on Discord: `muhittin852`.
