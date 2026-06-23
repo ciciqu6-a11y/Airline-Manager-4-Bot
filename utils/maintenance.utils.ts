@@ -9,12 +9,10 @@ export class MaintenanceUtils {
     }
 
     public async repairPlanes() {
-        // SOLUSI KOREKSI: Hapus icon khusus, cari tombol mengandung kata 'Plan'
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan', exact: false }));
+        await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Plan")').first());
         await GeneralUtils.randomSleep(1000, 2000);
         
-        // SOLUSI KOREKSI: Cari tombol mengandung kata 'Bulk repair'
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Bulk repair', exact: false }));
+        await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Bulk repair")').first());
         await GeneralUtils.randomSleep(1000, 2000);
         
         await this.page.locator('#repairPct').selectOption('60');
@@ -22,21 +20,18 @@ export class MaintenanceUtils {
         
         const noPlaneExists = await this.page.getByText('There are no aircraft worn to').isVisible();
         if(!noPlaneExists) {
-            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan bulk repair', exact: false }));
+            await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Plan bulk repair")').first());
         }
     }
 
     public async checkPlanes() {
-        // SOLUSI KOREKSI: Hapus icon khusus
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan', exact: false }));
+        await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Plan")').first());
         await GeneralUtils.randomSleep(1000, 2000);
         
-        // SOLUSI KOREKSI: Cari tombol mengandung kata 'Bulk check'
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Bulk check', exact: false }));
+        await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Bulk check")').first());
         await GeneralUtils.randomSleep(2000, 4000);
         
         let clicked = false;
-
         const dangerChecksExits = await this.page.locator('.bg-white > .text-danger').first().isVisible();
         if(dangerChecksExits) {
             const allCheckHoursDanger = this.page.locator('.bg-white > .text-danger');
@@ -51,8 +46,7 @@ export class MaintenanceUtils {
 
         if(clicked) {
             await GeneralUtils.randomSleep(1000, 2000);
-            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan bulk check', exact: false }));
+            await GeneralUtils.humanClick(this.page, this.page.locator('button:has-text("Plan bulk check")').first());
         }
     }
 }
-
