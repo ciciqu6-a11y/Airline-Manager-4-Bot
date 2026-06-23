@@ -8,55 +8,63 @@ import { MaintenanceUtils } from '../utils/maintenance.utils';
 require('dotenv').config();
 
 test('All Operations', async ({ page }) => {
-  test.setTimeout(60000);
+  test.setTimeout(90000); // Naikkan ke 90 detik karena ada simulasi delay manusia
 
-  // Variable Initialization
   const fuelUtils = new FuelUtils(page);
   const generalUtils = new GeneralUtils(page);
   const campaignUtils = new CampaignUtils(page);
   const fleetUtils = new FleetUtils(page);
   const maintenanceUtils = new MaintenanceUtils(page);
-  // End //
 
-  // Login //
+  // Login dengan bypass Stealth //
   await generalUtils.login(page);
+  await GeneralUtils.randomSleep(3000, 5000);
 
   // Fuel Operations //
-  await page.locator('#mapMaint > img').first().click();
+  await GeneralUtils.humanClick(page, page.locator('#mapMaint > img').first());
+  await GeneralUtils.randomSleep(1500, 3000);
   await fuelUtils.buyFuel();
 
-  await page.getByRole('button', { name: ' Co2' }).click();
-  await GeneralUtils.sleep(1000);
+  await GeneralUtils.randomSleep(1000, 2500);
+  await GeneralUtils.humanClick(page, page.getByRole('button', { name: ' Co2' }));
+  await GeneralUtils.randomSleep(1000, 2000);
   await fuelUtils.buyCo2();
 
-  await page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons').click();
+  await GeneralUtils.randomSleep(1000, 2500);
+  await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
   // End //
 
   // Campaign Operations //
-  await page.locator('div:nth-child(5) > #mapMaint > img').click();
+  await GeneralUtils.randomSleep(2000, 4000);
+  await GeneralUtils.humanClick(page, page.locator('div:nth-child(5) > #mapMaint > img'));
+  await GeneralUtils.randomSleep(1500, 3000);
   await campaignUtils.createCampaign();
 
-  await page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons').click();
-  await GeneralUtils.sleep(1000)
+  await GeneralUtils.randomSleep(1000, 2000);
+  await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
   // End //
 
-  // Repair Planes if needed //
-  await page.locator('div:nth-child(4) > #mapMaint > img').click();
+  // Repair Planes //
+  await GeneralUtils.randomSleep(2000, 4000);
+  await GeneralUtils.humanClick(page, page.locator('div:nth-child(4) > #mapMaint > img'));
+  await GeneralUtils.randomSleep(1500, 3000);
   
   await maintenanceUtils.checkPlanes();
-  await GeneralUtils.sleep(1000);
+  await GeneralUtils.randomSleep(1500, 3000);
   await maintenanceUtils.repairPlanes();
-  await GeneralUtils.sleep(1000);
+  await GeneralUtils.randomSleep(1500, 3000);
 
-  await page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons').click();
+  await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
   // End //
 
-  // Depart Planes Operations //
-  await page.locator('#mapRoutes').getByRole('img').click();
-  await GeneralUtils.sleep(2500);
+  // Depart Planes //
+  await GeneralUtils.randomSleep(2000, 4000);
+  await GeneralUtils.humanClick(page, page.locator('#mapRoutes').getByRole('img'));
+  await GeneralUtils.randomSleep(3000, 5000);
 
   await fleetUtils.departPlanes();
   // End //
 
-  page.close();
+  await GeneralUtils.randomSleep(2000, 4000);
+  await page.close();
 });
