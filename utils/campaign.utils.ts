@@ -21,9 +21,14 @@ export class CampaignUtils {
     private async createEcoFriendly() {
         const isEcoFriendExists = await this.page.getByRole('cell', { name: ' Eco friendly' }).isVisible();
         if(!isEcoFriendExists) {
-            await this.page.getByRole('button', { name: ' New campaign' }).click();
-            await this.page.getByRole('cell', { name: 'Eco-friendly Increases' }).click();
-            await this.page.getByRole('button', { name: '$' }).click();
+            // KOREKSI: Ganti ke humanClick
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' New campaign' }));
+            await GeneralUtils.randomSleep(1000, 2000);
+            
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('cell', { name: 'Eco-friendly Increases' }));
+            await GeneralUtils.randomSleep(1000, 2000);
+            
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: '$' }));
 
             console.log("Eco Friendly Campaign Created Successfully!");
         }
@@ -35,23 +40,32 @@ export class CampaignUtils {
 
         const isAirlineReputationExists = await this.page.getByRole('cell', { name: ' Airline reputation' }).isVisible();
         if (!isAirlineReputationExists) {
-            await this.page.getByRole('button', { name: ' New campaign' }).click();
-            await this.page.getByRole('cell', { name: 'Increase airline reputation' }).click();
+            // KOREKSI: Ganti ke humanClick
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' New campaign' }));
+            await GeneralUtils.randomSleep(1000, 2000);
+            
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('cell', { name: 'Increase airline reputation' }));
+            await GeneralUtils.randomSleep(1000, 2000);
+            
             await this.page.locator('#dSelector').selectOption(durationOption);
-            await this.page.locator(`tr:has(td:has-text("Campaign ${campaignType}")) .btn-danger`).click();
+            await GeneralUtils.randomSleep(1000, 2000);
+            
+            await GeneralUtils.humanClick(this.page, this.page.locator(`tr:has(td:has-text("Campaign ${campaignType}")) .btn-danger`));
 
             console.log("Increased Airline Reputation Successfully!");
         }
     }
 
     public async createCampaign() {
-        console.log('Create Campaing Started...')
+        console.log('Create Campaign Started...')
 
-        await this.page.getByRole('button', { name: ' Marketing' }).click();
+        // KOREKSI: Ganti ke humanClick
+        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Marketing' }));
 
-        await GeneralUtils.sleep(1000);
+        await GeneralUtils.randomSleep(1500, 3000);
 
         await this.createEcoFriendly();
+        await GeneralUtils.randomSleep(1500, 3000);
 
         if(this.increaseAirlineReputation) {
             await this.createReputation();
