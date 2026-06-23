@@ -60,25 +60,22 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
 
-    # SOLUSI KOREKSI: Membuat aktivitas nyata sebulan sekali untuk mereset timer 60 hari GitHub (Hanya 1x sebulan)
-    - name: Keepalive Via Auto Commit (Hanya Tanggal 1 Jam 00:17)
+    # SOLUSI KOREKSI: Otomatis push file last-commit.txt jika ada perubahan dari script spec.ts
+    - name: Keepalive Via Auto Commit
       if: always()
       run: |
-        # Mengambil data jam dan menit saat ini
-        JAM=$(date +%H)
-        MENIT=$(date +%M)
-
-        # Cek: Tanggal 1, Jam 00, dan Menit kurang dari 30 (pasti kena di eksekusi menit 17)
-        if [ "$(date +%d)" = "01" ] && [ "$JAM" = "00" ] && [ "$MENIT" -lt 30 ]; then
-          echo "Kondisi terpenuhi (Tanggal 1, Jam 00, Menit $MENIT). Menjalankan auto-commit..."
-          date > .github/keepalive_timestamp
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .github/keepalive_timestamp
+        # Konfigurasi identitas Git
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Cek apakah ada perubahan nyata pada file last-commit.txt
+        if [ -f "last-commit.txt" ] && git status --porcelain | grep -q "last-commit.txt"; then
+          echo "Terdeteksi perubahan pada last-commit.txt. Menjalankan auto-commit..."
+          git add last-commit.txt
           # Tag [skip ci] wajib agar commit ini tidak memicu run tes baru secara berulang-ulang
-          git commit -m "chore: keepalive update [skip ci]" || exit 0
+          git commit -m "chore: keepalive update [skip ci]"
           git push
         else
-          echo "Kondisi tidak terpenuhi (Jam: $JAM:$MENIT). Melewati proses commit agar Git tetap bersih."
+          echo "Tidak ada perubahan pada last-commit.txt (Bukan tanggal 1 atau sudah di-commit pada sesi sebelumnya). Git tetap bersih."
         fi
         
