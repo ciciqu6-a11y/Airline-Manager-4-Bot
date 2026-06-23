@@ -1,8 +1,6 @@
 name: Playwright Tests
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "17,43 * * * *" # Menit ganjil sepi dari jam sibuk
 
 jobs:
   test:
@@ -62,13 +60,17 @@ jobs:
     - name: Run Playwright tests
       run: npx playwright test
 
-    # SOLUSI KOREKSI: Membuat aktivitas nyata sebulan sekali untuk mereset timer 60 hari GitHub
-    - name: Keepalive Via Auto Commit (Hanya Tanggal 1)
+    # SOLUSI KOREKSI: Membuat aktivitas nyata sebulan sekali untuk mereset timer 60 hari GitHub (Hanya 1x sebulan)
+    - name: Keepalive Via Auto Commit (Hanya Tanggal 1 Jam 00:17)
       if: always()
       run: |
-        # Memeriksa apakah hari ini adalah tanggal 01
-        if [ "$(date +%d)" = "01" ]; then
-          echo "Hari ini tanggal 1, membuat aktivitas commit untuk mereset timer 60 hari GitHub..."
+        # Mengambil data jam dan menit saat ini
+        JAM=$(date +%H)
+        MENIT=$(date +%M)
+
+        # Cek: Tanggal 1, Jam 00, dan Menit kurang dari 30 (pasti kena di eksekusi menit 17)
+        if [ "$(date +%d)" = "01" ] && [ "$JAM" = "00" ] && [ "$MENIT" -lt 30 ]; then
+          echo "Kondisi terpenuhi (Tanggal 1, Jam 00, Menit $MENIT). Menjalankan auto-commit..."
           date > .github/keepalive_timestamp
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -77,6 +79,6 @@ jobs:
           git commit -m "chore: keepalive update [skip ci]" || exit 0
           git push
         else
-          echo "Bukan tanggal 1, melewati proses commit agar riwayat Git tetap bersih."
+          echo "Kondisi tidak terpenuhi (Jam: $JAM:$MENIT). Melewati proses commit agar Git tetap bersih."
         fi
         
