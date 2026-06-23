@@ -1,15 +1,13 @@
 import { Page } from "@playwright/test";
 import { GeneralUtils } from "./general.utils";
 
-require('dotenv').config();
-
 export class FleetUtils {
     page : Page;
-    maxTry : number; // Added to prevent infinite loop in case of no fuel available
+    maxTry : number;
 
     constructor(page : Page) {
         this.page = page;
-        this.maxTry = 8; // TODO: Find another way 
+        this.maxTry = 8;
     }
 
     public async departPlanes() {
@@ -20,10 +18,11 @@ export class FleetUtils {
         while(departAllVisible && count < this.maxTry) {
             console.log('Departing 20 or less...');
 
-            let departAll = await this.page.locator('#departAll');
+            let departAll = this.page.locator('#departAll');
             
-            await departAll.click();
-            await GeneralUtils.sleep(1500);
+            // Menggunakan humanClick alih-alih .click() biasa
+            await GeneralUtils.humanClick(this.page, departAll);
+            await GeneralUtils.randomSleep(2000, 4000); // Jeda acak antar kloter terbang
             
             const cantDepartPlane = await this.page.getByText('×Unable to departSome A/C was').isVisible();
             if(cantDepartPlane)
@@ -31,8 +30,7 @@ export class FleetUtils {
 
             departAllVisible = await this.page.locator('#departAll').isVisible();
             count++;
-        
-            console.log('Departed 20 or less planes...')
         }
+        console.log('Departed operations finished.');
     }
 }
