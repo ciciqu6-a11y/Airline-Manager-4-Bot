@@ -143,12 +143,13 @@ test('All Operations', async ({ page }) => {
   // 1. Jalankan tugas awal yang sudah diacak (Fuel / Maintenance)
   for (const task of initialTasks) {
     await task();
-    await GeneralUtils.randomSleep(3000, 6000);
+    // Jeda ditingkatkan ke 5-9 detik agar transisi penutupan pop-up menu stabil di server GitHub Actions
+    await GeneralUtils.randomSleep(5000, 9000); 
   }
 
   // 2. Kunci: Selalu jalankan Marketing tepat sebelum armada terbang
   await runCampaign();
-  await GeneralUtils.randomSleep(4000, 7000);
+  await GeneralUtils.randomSleep(5000, 8000);
 
   // 3. Kunci: Terbangkan semua pesawat di bagian paling akhir
   await runDepart();
