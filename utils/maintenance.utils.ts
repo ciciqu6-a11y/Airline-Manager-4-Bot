@@ -9,40 +9,50 @@ export class MaintenanceUtils {
     }
 
     public async repairPlanes() {
-        await this.page.getByRole('button', { name: ' Plan' }).click();
-        await this.page.getByRole('button', { name: ' Bulk repair' }).click();
+        // KOREKSI: Ganti ke humanClick
+        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Plan' }));
+        await GeneralUtils.randomSleep(1000, 2000);
+        
+        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Bulk repair' }));
+        await GeneralUtils.randomSleep(1000, 2000);
+        
         await this.page.locator('#repairPct').selectOption('60');
-        await GeneralUtils.sleep(1000);
+        await GeneralUtils.randomSleep(1000, 2500);
+        
         const noPlaneExists = await this.page.getByText('There are no aircraft worn to').isVisible();
         if(!noPlaneExists) {
-            await this.page.getByRole('button', { name: 'Plan bulk repair' }).click();
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan bulk repair' }));
         }
     }
 
     public async checkPlanes() {
-        await this.page.getByRole('button', { name: ' Plan' }).click();
-        await this.page.getByRole('button', { name: ' Bulk check' }).click();
-
-        await GeneralUtils.sleep(2000);
+        // KOREKSI: Ganti ke humanClick
+        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Plan' }));
+        await GeneralUtils.randomSleep(1000, 2000);
+        
+        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Bulk check' }));
+        await GeneralUtils.randomSleep(2000, 4000);
+        
         let clicked = false;
 
-        // Click only planes with danger text
         const dangerChecksExits = await this.page.locator('.bg-white > .text-danger').first().isVisible();
         if(dangerChecksExits) {
-            const allCheckHoursDanger = await this.page.locator('.bg-white > .text-danger');
+            const allCheckHoursDanger = this.page.locator('.bg-white > .text-danger');
             let count = await allCheckHoursDanger.count();        
             for(let i = 0; i < count; i++) {
-                const element = await allCheckHoursDanger.first();
+                const element = allCheckHoursDanger.nth(i); // Menggunakan .nth(i) agar urut dan aman
 
-                await element.click();
+                // KOREKSI: Ganti ke humanClick
+                await GeneralUtils.humanClick(this.page, element);
                 clicked = true;
 
-                await GeneralUtils.sleep(500);
+                await GeneralUtils.randomSleep(600, 1500); // Jeda acak antar-klik pesawat rusak
             }
         }
 
         if(clicked) {
-            await this.page.getByRole('button', { name: 'Plan bulk check' }).click();
+            await GeneralUtils.randomSleep(1000, 2000);
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: 'Plan bulk check' }));
         }
     }
 }
