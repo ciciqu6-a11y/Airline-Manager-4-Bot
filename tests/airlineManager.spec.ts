@@ -8,7 +8,8 @@ import { MaintenanceUtils } from '../utils/maintenance.utils';
 require('dotenv').config();
 
 test('All Operations', async ({ page }) => {
-  test.setTimeout(120000); // Naikkan ke 120 detik karena pengetikan lambat dan dynamic delay
+  // Timeout 3 menit agar aman untuk ketikan lambat dan delay manusia
+  test.setTimeout(180000); 
 
   const fuelUtils = new FuelUtils(page);
   const generalUtils = new GeneralUtils(page);
@@ -16,69 +17,115 @@ test('All Operations', async ({ page }) => {
   const fleetUtils = new FleetUtils(page);
   const maintenanceUtils = new MaintenanceUtils(page);
 
-  // 1. Selalu lakukan Login di awal
-  await generalUtils.login(page);
-  await GeneralUtils.randomSleep(4000, 7000);
+  // Fungsi klik area kosong mendatar di bagian atas layar untuk menutup menu/peta
+  const clickBlankSpaceTop = async () => {
+    console.log('Mengeklik area kosong di atas layar untuk kembali/menutup menu...');
+    // X diacak mendatar (200 - 600) untuk menghindari tombol pojok, Y tetap di atas (15 - 30)
+    const randomX = Math.floor(Math.random() * (600 - 200 + 1) + 200);
+    const randomY = Math.floor(Math.random() * (300 - 15 + 1) + 15);
+    
+    await page.mouse.move(randomX, randomY, { steps: 6 });
+    await page.mouse.down();
+    await GeneralUtils.randomSleep(80, 180);
+    await page.mouse.up();
+  };
 
-  // KOREKSI 3: Definisikan daftar modul tugas sebagai fungsi terpisah
+  // 1. Proses Login Utama
+  await generalUtils.login(page);
+  await GeneralUtils.randomSleep(5000, 8000);
+
+  // ==================== DEFINISI MODUL TUGAS ====================
+
   const taskFuel = async () => {
-    console.log('[Task] Executing Fuel & CO2 Module...');
+    console.log('[Task] Memulai Modul Bahan Bakar & CO2...');
     await GeneralUtils.humanClick(page, page.locator('#mapMaint > img').first());
-    await GeneralUtils.randomSleep(1500, 3000);
+    await GeneralUtils.randomSleep(2000, 4000);
+    
     await fuelUtils.buyFuel();
-    await GeneralUtils.randomSleep(1200, 2500);
-    await GeneralUtils.humanClick(page, page.getByRole('button', { name: ' Co2' }));
     await GeneralUtils.randomSleep(1500, 3000);
+    
+    await GeneralUtils.humanClick(page, page.getByRole('button', { name: ' Co2' }));
+    await GeneralUtils.randomSleep(2000, 4000);
+    
     await fuelUtils.buyCo2();
-    await GeneralUtils.randomSleep(1000, 2000);
-    await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
+    await GeneralUtils.randomSleep(1500, 3000);
+    
+    // Keluar menggunakan klik atas acak
+    await clickBlankSpaceTop();
+    console.log('[Task] Modul Bahan Bakar & CO2 Selesai.');
   };
 
   const taskCampaign = async () => {
-    console.log('[Task] Executing Marketing Campaign Module...');
+    console.log('[Task] Memulai Modul Kampanye Pemasaran...');
+    
+    // KOREKSI UTAMA: Klik menu Finance terlebih dahulu sebelum masuk ke Marketing
+    console.log('Membuka menu Finance...');
+    await GeneralUtils.humanClick(page, page.getByRole('button', { name: ' Finance' }));
+    await GeneralUtils.randomSleep(2000, 4000);
+
+    // Buka sub-menu Marketing dan jalankan promosinya
     await GeneralUtils.humanClick(page, page.locator('div:nth-child(5) > #mapMaint > img'));
-    await GeneralUtils.randomSleep(2000, 3500);
+    await GeneralUtils.randomSleep(2500, 4500);
     await campaignUtils.createCampaign();
-    await GeneralUtils.randomSleep(1200, 2500);
-    await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
+    await GeneralUtils.randomSleep(1500, 3000);
+    
+    // Keluar menggunakan klik atas acak
+    await clickBlankSpaceTop();
+    console.log('[Task] Modul Kampanye Pemasaran Selesai.');
   };
 
   const taskMaintenance = async () => {
-    console.log('[Task] Executing Plane Repair Module...');
+    console.log('[Task] Memulai Modul Pemeliharaan & Perbaikan Pesawat...');
     await GeneralUtils.humanClick(page, page.locator('div:nth-child(4) > #mapMaint > img'));
-    await GeneralUtils.randomSleep(2000, 4000);
+    await GeneralUtils.randomSleep(2500, 4500);
+    
     await maintenanceUtils.checkPlanes();
-    await GeneralUtils.randomSleep(1500, 3000);
+    await GeneralUtils.randomSleep(2000, 4000);
+    
     await maintenanceUtils.repairPlanes();
-    await GeneralUtils.randomSleep(1500, 3000);
-    await GeneralUtils.humanClick(page, page.locator('#popup > .modal-dialog > .modal-content > .modal-header > div > .glyphicons'));
+    await GeneralUtils.randomSleep(2000, 4000);
+    
+    // Keluar menggunakan klik atas acak
+    await clickBlankSpaceTop();
+    console.log('[Task] Modul Pemeliharaan Selesai.');
   };
 
   const taskDepart = async () => {
-    console.log('[Task] Executing Fleet Departure Module...');
+    console.log('[Task] Memulai Modul Pelepasan Armada (Depart All)...');
     await GeneralUtils.humanClick(page, page.locator('#mapRoutes').getByRole('img'));
-    await GeneralUtils.randomSleep(3000, 5000);
+    await GeneralUtils.randomSleep(4000, 6000);
+    
     await fleetUtils.departPlanes();
+    await GeneralUtils.randomSleep(2000, 4000);
+    
+    // Keluar dari layar peta rute penerbangan menggunakan klik atas acak
+    await clickBlankSpaceTop();
+    console.log('[Task] Modul Pelepasan Armada Selesai.');
   };
 
-  // Masukkan modul ke dalam daftar array tugas
+  // ==================== PENGACAK TUGAS (TASK SHUFFLER) ====================
+
   const operationalTasks = [taskFuel, taskCampaign, taskMaintenance, taskDepart];
 
-  // Algoritma Fisher-Yates untuk mengacak urutan isi array secara merata
+  // Mengacak urutan eksekusi tugas (Fisher-Yates Shuffle)
   for (let i = operationalTasks.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [operationalTasks[i], operationalTasks[j]] = [operationalTasks[j], operationalTasks[i]];
   }
 
-  // Eksekusi tugas satu per satu berdasarkan urutan yang sudah diacak secara acak
-  console.log('--- Starting Randomized Task Order ---');
+  // ==================== EKSEKUSI UTAMA ====================
+
+  console.log('--- Memulai Urutan Tugas yang Diacak ---');
+  
   for (const task of operationalTasks) {
     await task();
-    await GeneralUtils.randomSleep(3000, 6000); // Jeda santai sebelum pindah ke menu utama tugas berikutnya
+    // Beri jeda santai sebelum masuk ke modul acak berikutnya
+    await GeneralUtils.randomSleep(4000, 8000);
   }
-  console.log('--- All Randomized Tasks Finished ---');
+  
+  console.log('--- Seluruh Tugas Acak Berhasil Dieksekusi ---');
 
-  // Selesai //
-  await GeneralUtils.randomSleep(2000, 4000);
-  page.close();
+  // Penutupan Sesi Akhir
+  await GeneralUtils.randomSleep(3000, 5000);
+  await page.close();
 });
