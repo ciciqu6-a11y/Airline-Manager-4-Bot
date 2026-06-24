@@ -2,7 +2,7 @@
 
 This repository contains a bot for Airline Manager 4, built with Playwright and scheduled to run on GitHub Actions. The bot is designed to run every hour at 01 and 31 minutes but the schedule can be changed according to preference.
 ## Features
-- improved anti ban logic
+- add anti ban logic (under development, cant guarantee 100% safe)
 ### Implemented
 - Start an eco-friendly campaign if not already started.
 - Start a campaign to increase airline reputation.
