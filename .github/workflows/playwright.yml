@@ -4,7 +4,7 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 15
+    timeout-minutes: 29
     runs-on: ubuntu-22.04
     
     # Hak akses wajib agar bot bisa melakukan push commit ke dalam repositori
