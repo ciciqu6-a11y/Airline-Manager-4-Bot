@@ -15,7 +15,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: Random Delay
       run: |
-         DELAY=$(( RANDOM % 1380 ))
+         DELAY=$(( RANDOM % 1500 ))
          echo "Menunggu $DELAY detik..."
          sleep $DELAY
 
