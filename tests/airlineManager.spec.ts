@@ -91,9 +91,24 @@ test('All Operations', async ({ page }) => {
 
   const runMaintenance = async () => {
     console.log('[Task] Memulai Modul Pemeliharaan & Perbaikan Pesawat...');
-    await GeneralUtils.humanClick(page, page.locator('div:nth-child(4) > #mapMaint > img'));
-    await GeneralUtils.randomSleep(2500, 4500);
+    await clickBlankSpaceTop();
+    await GeneralUtils.randomSleep(1000, 1800);
 
+    const maintenanceTile = page.locator('div:nth-child(4) > #mapMaint > img');
+    await GeneralUtils.humanClick(page, maintenanceTile);
+
+    try {
+      await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 15000 });
+    } catch (error) {
+      console.log('[Task] Retry opening maintenance panel...');
+      await GeneralUtils.randomSleep(1500, 2500);
+      await clickBlankSpaceTop();
+      await GeneralUtils.randomSleep(1000, 1800);
+      await GeneralUtils.humanClick(page, maintenanceTile);
+      await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 15000 });
+    }
+
+    await GeneralUtils.randomSleep(1200, 2200);
     await maintenanceUtils.checkPlanes();
     await GeneralUtils.randomSleep(2000, 4000);
     
