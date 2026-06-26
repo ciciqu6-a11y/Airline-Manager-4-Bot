@@ -39,3 +39,12 @@ This repository contains a bot for Airline Manager 4, built with Playwright and 
 - If you don't want your repo to be public you can clone this project and commit it to your private repo.
 - if you want your action always run on time use cron-job.org and remove cron inside yml
 - For questions, reach out on Discord: `muhittin852`.
+
+## Organic bot behavior
+This bot includes several organic interaction patterns to make automation appear more human-like:
+- random pause times between actions with `GeneralUtils.randomSleep(min, max)`
+- simulated mouse movement and click jitter via `GeneralUtils.humanClick(...)`
+- typed input with randomized delays using `page.locator(...).pressSequentially(...)`
+- random task execution order between fuel and maintenance modules
+- blank-space clicks to close floating overlays or modals before new actions
+- explicit waits for important UI elements like the maintenance `Plan` button before proceeding

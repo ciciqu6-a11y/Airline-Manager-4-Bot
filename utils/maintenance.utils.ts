@@ -8,9 +8,14 @@ export class MaintenanceUtils {
         this.page = page;
     }
 
+    private async openPlanPanel() {
+        const planButton = this.page.getByRole('button', { name: ' Plan' });
+        await planButton.waitFor({ state: 'visible', timeout: 15000 });
+        await GeneralUtils.humanClick(this.page, planButton);
+    }
+
     public async repairPlanes() {
-        // KOREKSI: Ganti ke humanClick
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Plan' }));
+        await this.openPlanPanel();
         await GeneralUtils.randomSleep(1000, 2000);
         
         await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Bulk repair' }));
@@ -26,8 +31,7 @@ export class MaintenanceUtils {
     }
 
     public async checkPlanes() {
-        // KOREKSI: Ganti ke humanClick
-        await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Plan' }));
+        await this.openPlanPanel();
         await GeneralUtils.randomSleep(1000, 2000);
         
         await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Bulk check' }));
