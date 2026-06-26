@@ -16,7 +16,7 @@ export class MaintenanceUtils {
         await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Bulk repair' }));
         await GeneralUtils.randomSleep(1000, 2000);
         
-        await this.page.locator('#repairPct').selectOption('60');
+        await this.page.locator('#repairPct').selectOption('30');
         await GeneralUtils.randomSleep(1000, 2500);
         
         const noPlaneExists = await this.page.getByText('There are no aircraft worn to').isVisible();
