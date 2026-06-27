@@ -54,13 +54,20 @@ export class FuelUtils {
 
         const getCurrentBalance = async () => {
             try {
-                let balanceText = await this.page.getByText(/Balance|balance|Money|Cash|USD|€|\$/).innerText();
-                balanceText = balanceText.replaceAll(',', '').replace(/[^0-9]/g, '');
-                const balance = parseInt(balanceText);
-                return Number.isNaN(balance) ? 0 : balance;
+                const bodyText = await this.page.locator('body').innerText();
+                const amountMatches = [...bodyText.matchAll(/\$([0-9][0-9.,]*)/g)];
+                if (amountMatches.length > 0) {
+                    const firstDollarAmount = amountMatches[0][1].replaceAll(',', '');
+                    const parsed = parseInt(firstDollarAmount, 10);
+                    if (!Number.isNaN(parsed) && parsed > 0) {
+                        return parsed;
+                    }
+                }
             } catch {
-                return 0;
+                // fallback to zero if the page text cannot be read
             }
+
+            return 0;
         }
 
         const emptyFuel = await getEmptyFuel();
