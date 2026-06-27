@@ -83,19 +83,19 @@ export class FuelUtils {
         console.log('Current Fuel Unit Price (per 1000): ' + unitPrice);
         console.log('Current Balance: ' + currentBalance);
 
-        const calculatePurchaseAmount = (capacity: number, balance: number, unitPrice: number) => {
-            if (unitPrice <= 0) {
+        const calculatePurchaseAmount = (capacity: number, balance: number, pricePer1000Liters: number) => {
+            if (pricePer1000Liters <= 0 || balance <= 0) {
                 return 0;
             }
 
-            const totalCost = Math.ceil(capacity / 1000) * unitPrice;
-            if (balance >= totalCost) {
+            const fullCostForCapacity = (capacity / 1000) * pricePer1000Liters;
+            if (balance >= fullCostForCapacity) {
                 return capacity;
             }
 
             const halfBudget = Math.floor(balance / 2);
-            const units = Math.floor(halfBudget / unitPrice);
-            return Math.max(units * 1000, 0);
+            const affordableLiters = Math.floor((halfBudget * 1000) / pricePer1000Liters);
+            return Math.max(0, Math.min(capacity, affordableLiters));
         }
 
         const fillFuel = async (amountToBuy: number, label: string) => {
