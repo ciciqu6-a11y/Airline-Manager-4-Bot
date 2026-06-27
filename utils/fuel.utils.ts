@@ -17,6 +17,28 @@ export class FuelUtils {
         console.log("Max Co2 Price: " + this.maxCo2Price);
     }
 
+    public async getCurrentBalance() {
+        const accountBalanceElement = this.page.locator('#headerAccount');
+        if (await accountBalanceElement.count()) {
+            const balanceText = await accountBalanceElement.first().innerText().catch(() => '');
+            const parsed = parseInt(balanceText.replaceAll(',', '').trim(), 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        const accountLabel = this.page.getByText('Account', { exact: true }).first();
+        if (await accountLabel.count()) {
+            const balanceText = await accountLabel.locator('..').locator('div').first().innerText().catch(() => '');
+            const parsed = parseInt(balanceText.replaceAll(',', '').replace(/[^0-9]/g, '').trim(), 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        return 0;
+    }
+
     public async buyFuel() {
         console.log('Buying Fuel...')
 
@@ -53,22 +75,35 @@ export class FuelUtils {
         }
 
         const getCurrentBalance = async () => {
+            const accountBalanceElement = this.page.locator('#headerAccount');
             try {
-                const bodyText = await this.page.locator('body').innerText();
-                const amountMatches = [...bodyText.matchAll(/\$([0-9][0-9.,]*)/g)];
-                if (amountMatches.length > 0) {
-                    const firstDollarAmount = amountMatches[0][1].replaceAll(',', '');
-                    const parsed = parseInt(firstDollarAmount, 10);
-                    if (!Number.isNaN(parsed) && parsed > 0) {
-                        return parsed;
-                    }
-                }
+                await accountBalanceElement.first().waitFor({ state: 'visible', timeout: 10000 });
             } catch {
-                // fallback to zero if the page text cannot be read
+                // continue to fallback if the header account element is not ready
+            }
+
+            if (await accountBalanceElement.count()) {
+                const balanceText = await accountBalanceElement.first().innerText().catch(() => '');
+                const parsed = parseInt(balanceText.replaceAll(',', '').trim(), 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                    return parsed;
+                }
+            }
+
+            const accountLabel = this.page.getByText('Account', { exact: true }).first();
+            if (await accountLabel.count()) {
+                const balanceText = await accountLabel.locator('..').locator('div').first().innerText().catch(() => '');
+                const parsed = parseInt(balanceText.replaceAll(',', '').replace(/[^0-9]/g, '').trim(), 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                    return parsed;
+                }
             }
 
             return 0;
         }
+
+        const currentBalance = await getCurrentBalance();
+        console.log('Current Balance: ' + currentBalance);
 
         const emptyFuel = await getEmptyFuel();
         if(emptyFuel === 0) {
@@ -78,7 +113,6 @@ export class FuelUtils {
 
         const unitPrice = await getCurrentFuelUnitPrice();
         const curHolding = await getCurrentHolding();
-        const currentBalance = await getCurrentBalance();
 
         console.log('Current Fuel Unit Price (per 1000): ' + unitPrice);
         console.log('Current Balance: ' + currentBalance);
