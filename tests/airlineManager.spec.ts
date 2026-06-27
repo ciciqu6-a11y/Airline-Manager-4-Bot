@@ -73,6 +73,9 @@ test('All Operations', async ({ page }) => {
 
   const runFuel = async () => {
     console.log('[Task] Memulai Modul Bahan Bakar & CO2...');
+    const currentBalance = await fuelUtils.getCurrentBalance();
+    console.log('[Task] Current account balance before opening Fuel: ' + currentBalance);
+
     await GeneralUtils.humanClick(page, page.locator('#mapMaint > img').first());
     await GeneralUtils.randomSleep(2000, 4000);
     

@@ -17,13 +17,50 @@ export class FuelUtils {
         console.log("Max Co2 Price: " + this.maxCo2Price);
     }
 
+    public async getCurrentBalance() {
+        const accountBalanceElement = this.page.locator('#headerAccount');
+        if (await accountBalanceElement.count()) {
+            const balanceText = await accountBalanceElement.first().innerText().catch(() => '');
+            const parsed = parseInt(balanceText.replaceAll(',', '').trim(), 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        const accountLabel = this.page.getByText('Account', { exact: true }).first();
+        if (await accountLabel.count()) {
+            const balanceText = await accountLabel.locator('..').locator('div').first().innerText().catch(() => '');
+            const parsed = parseInt(balanceText.replaceAll(',', '').replace(/[^0-9]/g, '').trim(), 10);
+            if (!Number.isNaN(parsed) && parsed > 0) {
+                return parsed;
+            }
+        }
+
+        return 0;
+    }
+
     public async buyFuel() {
         console.log('Buying Fuel...')
+
+        const fuelInput = this.page.getByPlaceholder('Amount to purchase');
 
         const getCurrentFuelPrice = async () => {
             let fuelText = await this.page.getByText('Total price$').locator('b > span').innerText();
             fuelText = fuelText.replaceAll(',', '');
             return parseInt(fuelText);
+        }
+
+        const getCurrentFuelUnitPrice = async () => {
+            await GeneralUtils.humanClick(this.page, fuelInput);
+            await GeneralUtils.randomSleep(500, 1200);
+
+            await fuelInput.press('Control+a');
+            await GeneralUtils.randomSleep(400, 900);
+            await fuelInput.pressSequentially('1000', { delay: Math.floor(Math.random() * 80) + 40 });
+            await GeneralUtils.randomSleep(800, 1400);
+
+            const totalPrice = await getCurrentFuelPrice();
+            return totalPrice > 0 ? totalPrice : 0;
         }
 
         const getCurrentHolding = async () => {
@@ -37,49 +74,91 @@ export class FuelUtils {
             return parseInt(emptyText);
         }
 
+        const getCurrentBalance = async () => {
+            const accountBalanceElement = this.page.locator('#headerAccount');
+            try {
+                await accountBalanceElement.first().waitFor({ state: 'visible', timeout: 10000 });
+            } catch {
+                // continue to fallback if the header account element is not ready
+            }
+
+            if (await accountBalanceElement.count()) {
+                const balanceText = await accountBalanceElement.first().innerText().catch(() => '');
+                const parsed = parseInt(balanceText.replaceAll(',', '').trim(), 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                    return parsed;
+                }
+            }
+
+            const accountLabel = this.page.getByText('Account', { exact: true }).first();
+            if (await accountLabel.count()) {
+                const balanceText = await accountLabel.locator('..').locator('div').first().innerText().catch(() => '');
+                const parsed = parseInt(balanceText.replaceAll(',', '').replace(/[^0-9]/g, '').trim(), 10);
+                if (!Number.isNaN(parsed) && parsed > 0) {
+                    return parsed;
+                }
+            }
+
+            return 0;
+        }
+
+        const currentBalance = await getCurrentBalance();
+        console.log('Current Balance: ' + currentBalance);
+
         const emptyFuel = await getEmptyFuel();
         if(emptyFuel === 0) {
             console.log('Fuel tank is already full.');
             return;
         }
 
-        const curFuelPrice = await getCurrentFuelPrice();
+        const unitPrice = await getCurrentFuelUnitPrice();
         const curHolding = await getCurrentHolding();
 
-        console.log('Current Fuel Price: ' + curFuelPrice);
+        console.log('Current Fuel Unit Price (per 1000): ' + unitPrice);
+        console.log('Current Balance: ' + currentBalance);
 
-        // Beli bensin jika harga di bawah batas maksimum yang ditentukan pengguna
-        if(curFuelPrice < this.maxFuelPrice) {
-            const emptyFuelCapacity = (await this.page.locator('#remCapacity').innerText()).replaceAll(',', '');
+        const calculatePurchaseAmount = (capacity: number, balance: number, pricePer1000Liters: number) => {
+            if (pricePer1000Liters <= 0 || balance <= 0) {
+                return 0;
+            }
 
-            // KOREKSI: Ganti ke humanClick dan gunakan simulasi mengetik lambat
-            await GeneralUtils.humanClick(this.page, this.page.getByPlaceholder('Amount to purchase'));
-            await GeneralUtils.randomSleep(500, 1200);
-            
-            await this.page.getByPlaceholder('Amount to purchase').press('Control+a');
-            await GeneralUtils.randomSleep(400, 900);
-            
-            await this.page.getByPlaceholder('Amount to purchase').pressSequentially(emptyFuelCapacity, { delay: Math.floor(Math.random() * 80) + 40 });
-            await GeneralUtils.randomSleep(1000, 2000);
-            
-            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Purchase' }));
+            const fullCostForCapacity = (capacity / 1000) * pricePer1000Liters;
+            if (balance >= fullCostForCapacity) {
+                return capacity;
+            }
 
-            console.log('Bought Fuel Successfully! Amount of fuel bought: ' + emptyFuelCapacity + ' Litres');
+            const halfBudget = Math.floor(balance / 2);
+            const affordableLiters = Math.floor((halfBudget * 1000) / pricePer1000Liters);
+            return Math.max(0, Math.min(capacity, affordableLiters));
         }
-        // Kondisi darurat jika stok kritis (< 2M) meskipun harga agak mahal
-        else if(curHolding < 2000000 && curFuelPrice < 1250) {
-            await GeneralUtils.humanClick(this.page, this.page.getByPlaceholder('Amount to purchase'));
-            await GeneralUtils.randomSleep(500, 1200);
-            
-            await this.page.getByPlaceholder('Amount to purchase').press('Control+a');
-            await GeneralUtils.randomSleep(400, 900);
-            
-            await this.page.getByPlaceholder('Amount to purchase').pressSequentially('2000000', { delay: Math.floor(Math.random() * 80) + 40 });
-            await GeneralUtils.randomSleep(1000, 2000);
-            
-            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Purchase' }));
 
-            console.log('Bought Fuel Successfully! Amount of fuel bought: 2000000 Litres (Emergency Buy)');
+        const fillFuel = async (amountToBuy: number, label: string) => {
+            if (amountToBuy <= 0) {
+                console.log('Skipped fuel purchase because computed amount is zero or insufficient balance.');
+                return;
+            }
+
+            await GeneralUtils.humanClick(this.page, fuelInput);
+            await GeneralUtils.randomSleep(500, 1200);
+
+            await fuelInput.press('Control+a');
+            await GeneralUtils.randomSleep(400, 900);
+
+            await fuelInput.pressSequentially(amountToBuy.toString(), { delay: Math.floor(Math.random() * 80) + 40 });
+            await GeneralUtils.randomSleep(1000, 2000);
+
+            await GeneralUtils.humanClick(this.page, this.page.getByRole('button', { name: ' Purchase' }));
+            console.log(`Bought Fuel Successfully! Amount of fuel bought: ${amountToBuy} Litres${label}`);
+        }
+
+        if(unitPrice > 0 && unitPrice < this.maxFuelPrice) {
+            const purchaseAmount = calculatePurchaseAmount(emptyFuel, currentBalance, unitPrice);
+            await fillFuel(purchaseAmount, '');
+        }
+        else if(curHolding < 2000000 && unitPrice > 0 && unitPrice < 1250) {
+            const suggestedAmount = 2000000;
+            const purchaseAmount = calculatePurchaseAmount(suggestedAmount, currentBalance, unitPrice);
+            await fillFuel(purchaseAmount, ' (Emergency Buy)');
         } 
     }
 

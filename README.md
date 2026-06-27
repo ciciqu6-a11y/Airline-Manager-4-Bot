@@ -48,3 +48,4 @@ This bot includes several organic interaction patterns to make automation appear
 - random task execution order between fuel and maintenance modules
 - blank-space clicks to close floating overlays or modals before new actions
 - explicit waits for important UI elements like the maintenance `Plan` button before proceeding
+- video recordings are now retained when tests fail, in addition to failure screenshots
