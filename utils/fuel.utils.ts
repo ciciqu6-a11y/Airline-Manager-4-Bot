@@ -122,13 +122,20 @@ export class FuelUtils {
                 return 0;
             }
 
+            // Hitung total biaya jika membeli full kapasitas tangki yang kosong
             const fullCostForCapacity = (capacity / 1000) * pricePer1000Liters;
+            
+            // Jika uang cukup untuk memenuhi kapasitas kosong tangki, beli semuanya
             if (balance >= fullCostForCapacity) {
                 return capacity;
             }
 
+            // Jika uang tidak cukup, gunakan setengah dari balance saat ini (balance / 2)
             const halfBudget = Math.floor(balance / 2);
-            const affordableLiters = Math.floor((halfBudget * 1000) / pricePer1000Liters);
+            
+            // Rumus: (Setengah Uang ÷ Harga per 1000 Liter) * 1000 Liter agar presisi ke satuan Liter/Lbs
+            const affordableLiters = Math.floor((halfBudget / pricePer1000Liters) * 1000);
+            
             return Math.max(0, Math.min(capacity, affordableLiters));
         }
 
@@ -197,7 +204,6 @@ export class FuelUtils {
         if(curCo2Price < this.maxCo2Price) {
             const emptyCo2Capacity = (await this.page.locator('#remCapacity').innerText()).replaceAll(',', '');
 
-            // KOREKSI: Ganti ke humanClick dan pressSequentially
             await GeneralUtils.humanClick(this.page, this.page.getByPlaceholder('Amount to purchase'));
             await GeneralUtils.randomSleep(500, 1200);
             
@@ -227,4 +233,4 @@ export class FuelUtils {
             console.log('Bought Co2 Successfully! Amount of co2 bought: 1000000 (Emergency Buy)');
         }
     }
-}
+                                          }
