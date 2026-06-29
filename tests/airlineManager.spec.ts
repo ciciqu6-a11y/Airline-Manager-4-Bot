@@ -194,17 +194,18 @@ test('All Operations', async ({ page }) => {
   };
 
   const runDepart = async (attempt = 1) => {
-    console.log(`[Task] Memulai Modul Pelepasan Armada (Percobaan ${attempt})...`);
+    console.log(`[Task] Memulai Modul Pelepasan Armada (Depart All) (Percobaan ${attempt})...`);
     await clickBlankSpaceTop();
     await GeneralUtils.randomSleep(1200, 2000);
 
     await GeneralUtils.humanClick(page, menuTiles.depart);
     await GeneralUtils.randomSleep(4000, 6000);
 
+    // 1. Cek pertama: Apakah list rute berhasil nempel di DOM (bukan freeze halaman)
     try {
       await page.locator('#routeList').waitFor({ state: 'attached', timeout: 10000 });
     } catch (error) {
-      console.log('[Task] Modul Pelepasan Armada gagal terbuka/freeze.');
+      console.log('[Task] Panel rute tidak merespons/freeze.');
       if (attempt < 2) {
         await triggerRandomMenuPoke('depart');
         await runDepart(attempt + 1);
@@ -214,6 +215,22 @@ test('All Operations', async ({ page }) => {
       }
     }
 
+    // 2. Kunci Perbaikan: Validasi keberadaan pesawat siap terbang.
+    // Jika teks "No planes to depart" muncul ATAU tombol depart bawaan game tidak terdeteksi sama sekali
+    const noPlanesSign = page.getByText('No planes to depart', { exact: false });
+    const isNoPlanesVisible = await noPlanesSign.isVisible().catch(() => false);
+    
+    // Cek juga tombol depart individual / massal yang biasa muncul jika ada pesawat ready
+    const departButtonExist = await page.locator('button:has-text("Depart")').first().isVisible().catch(() => false);
+
+    if (isNoPlanesVisible || !departButtonExist) {
+        console.log('[Task] Tidak ada pesawat yang menganggur. Semua armada sedang mengudara.');
+        await clickBlankSpaceTop();
+        console.log('[Task] Modul Pelepasan Armada Selesai.');
+        return;
+    }
+
+    // Jika pesawat ada dan tombol terdeteksi, jalankan fungsi fleetUtils bawaanmu
     await fleetUtils.departPlanes();
     await GeneralUtils.randomSleep(2000, 4000);
 
