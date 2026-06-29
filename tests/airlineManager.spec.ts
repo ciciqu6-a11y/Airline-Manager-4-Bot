@@ -73,12 +73,28 @@ test('All Operations', async ({ page }) => {
 
   const runFuel = async () => {
     console.log('[Task] Memulai Modul Bahan Bakar & CO2...');
+    await clickBlankSpaceTop();
+    await GeneralUtils.randomSleep(1000, 1800);
+
+    const fuelTile = page.locator('#mapMaint > img').first();
+    await GeneralUtils.humanClick(page, fuelTile);
+    await GeneralUtils.randomSleep(2000, 4000);
+
+    try {
+      // Validasi apakah input form pembelian fuel sudah muncul di layar
+      await page.getByPlaceholder('Amount to purchase').waitFor({ state: 'visible', timeout: 10000 });
+    } catch (error) {
+      console.log('[Task] Modul Fuel gagal terbuka akibat lag. Melakukan recovery...');
+      await GeneralUtils.randomSleep(1500, 2500);
+      await clickBlankSpaceTop();
+      await GeneralUtils.randomSleep(1500, 2500);
+      await GeneralUtils.humanClick(page, fuelTile);
+      await page.getByPlaceholder('Amount to purchase').waitFor({ state: 'visible', timeout: 10000 });
+    }
+    
     const currentBalance = await fuelUtils.getCurrentBalance();
     console.log('[Task] Current account balance before opening Fuel: ' + currentBalance);
 
-    await GeneralUtils.humanClick(page, page.locator('#mapMaint > img').first());
-    await GeneralUtils.randomSleep(2000, 4000);
-    
     await fuelUtils.buyFuel();
     await GeneralUtils.randomSleep(1500, 3000);
 
@@ -103,7 +119,7 @@ test('All Operations', async ({ page }) => {
     try {
       await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 15000 });
     } catch (error) {
-      console.log('[Task] Retry opening maintenance panel...');
+      console.log('[Task] Modul Maintenance gagal terbuka akibat lag. Melakukan recovery...');
       await GeneralUtils.randomSleep(1500, 2500);
       await clickBlankSpaceTop();
       await GeneralUtils.randomSleep(1000, 1800);
@@ -132,17 +148,14 @@ test('All Operations', async ({ page }) => {
     await GeneralUtils.randomSleep(2500, 4500);
     
     try {
-      // Tunggu verifikasi apakah tombol Marketing internal di dalam campaignUtils siap diakses
       await page.getByRole('button', { name: ' Marketing' }).waitFor({ state: 'visible', timeout: 10000 });
     } catch (error) {
-      console.log('[Task] Kampanye gagal terbuka akibat lag/miss-click. Melakukan recovery...');
+      console.log('[Task] Kampanye gagal terbuka akibat lag. Melakukan recovery...');
       await GeneralUtils.randomSleep(1500, 2500);
       await clickBlankSpaceTop();
       await GeneralUtils.randomSleep(1500, 2500);
-      
-      // Klik ulang ubin menu utama
       await GeneralUtils.humanClick(page, marketingTile);
-      await GeneralUtils.randomSleep(3000, 5000);
+      await page.getByRole('button', { name: ' Marketing' }).waitFor({ state: 'visible', timeout: 10000 });
     }
 
     await campaignUtils.createCampaign();
@@ -154,8 +167,24 @@ test('All Operations', async ({ page }) => {
 
   const runDepart = async () => {
     console.log('[Task] Memulai Modul Pelepasan Armada (Depart All)...');
-    await GeneralUtils.humanClick(page, page.locator('#mapRoutes').getByRole('img'));
+    await clickBlankSpaceTop();
+    await GeneralUtils.randomSleep(1000, 1800);
+
+    const departTile = page.locator('#mapRoutes').getByRole('img');
+    await GeneralUtils.humanClick(page, departTile);
     await GeneralUtils.randomSleep(4000, 6000);
+
+    try {
+      // Validasi map/rute terbuka dengan memastikan text atau tombol depart nanti siap diakses
+      await page.locator('#routeList').waitFor({ state: 'attached', timeout: 10000 });
+    } catch (error) {
+      console.log('[Task] Modul Pelepasan Armada gagal terbuka akibat lag. Melakukan recovery...');
+      await GeneralUtils.randomSleep(1500, 2500);
+      await clickBlankSpaceTop();
+      await GeneralUtils.randomSleep(1500, 2500);
+      await GeneralUtils.humanClick(page, departTile);
+      await GeneralUtils.randomSleep(3000, 5000);
+    }
 
     await fleetUtils.departPlanes();
     await GeneralUtils.randomSleep(2000, 4000);
@@ -179,7 +208,6 @@ test('All Operations', async ({ page }) => {
   // 1. Jalankan tugas awal yang sudah diacak (Fuel / Maintenance)
   for (const task of initialTasks) {
     await task();
-    // Jeda ditingkatkan ke 5-9 detik agar transisi penutupan pop-up menu stabil di server GitHub Actions
     await GeneralUtils.randomSleep(5000, 9000); 
   }
 
