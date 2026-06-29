@@ -7,11 +7,6 @@ on:
         type: boolean
         required: false
         default: true
-      paksa_simpan_video:
-        description: 'Centang jika ingin tetap upload video/screenshot (untuk ditonton)'
-        type: boolean
-        required: false
-        default: false
 
 jobs:
   test:
@@ -76,8 +71,7 @@ jobs:
       
     - name: Upload Test Results
       uses: actions/upload-artifact@v4
-      # Logika: Upload jika skrip gagal ATAU jika Anda mencentang opsi manual paksa_simpan_video
-      if: failure() || github.event.inputs.paksa_simpan_video == 'true'
+      if: always() # Dikembalikan ke kondisi asal (selalu upload)
       with:
         name: playwright-report
         path: test-results/
