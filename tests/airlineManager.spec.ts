@@ -124,9 +124,27 @@ test('All Operations', async ({ page }) => {
 
   const runCampaign = async () => {
     console.log('[Task] Memulai Modul Kampanye Pemasaran (Sebelum Depart)...');
-    await GeneralUtils.humanClick(page, page.locator('div:nth-child(5) > #mapMaint > img'));
+    await clickBlankSpaceTop();
+    await GeneralUtils.randomSleep(1000, 1800);
+
+    const marketingTile = page.locator('div:nth-child(5) > #mapMaint > img');
+    await GeneralUtils.humanClick(page, marketingTile);
     await GeneralUtils.randomSleep(2500, 4500);
     
+    try {
+      // Tunggu verifikasi apakah tombol Marketing internal di dalam campaignUtils siap diakses
+      await page.getByRole('button', { name: ' Marketing' }).waitFor({ state: 'visible', timeout: 10000 });
+    } catch (error) {
+      console.log('[Task] Kampanye gagal terbuka akibat lag/miss-click. Melakukan recovery...');
+      await GeneralUtils.randomSleep(1500, 2500);
+      await clickBlankSpaceTop();
+      await GeneralUtils.randomSleep(1500, 2500);
+      
+      // Klik ulang ubin menu utama
+      await GeneralUtils.humanClick(page, marketingTile);
+      await GeneralUtils.randomSleep(3000, 5000);
+    }
+
     await campaignUtils.createCampaign();
     await GeneralUtils.randomSleep(1500, 3000);
 
