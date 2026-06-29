@@ -2,15 +2,15 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Read environment variables from file.
- * https://github.com/motdotla/dotenv
+ * https://github.com
  */
 // require('dotenv').config();
 
-// Deteksi apakah tombol "paksa_simpan_video" dicentang di GitHub Actions
-const isPaksaNonton = process.env.INPUT_PAKSA_SIMPAN_VIDEO === 'true';
+// Membaca variabel PAKSI_VIDEO yang dikirim dari file .yml
+const isPaksaNonton = process.env.PAKSI_VIDEO === 'true';
 
 /**
- * See https://playwright.dev/docs/test-configuration.
+ * See https://playwright.dev.
  */
 export default defineConfig({
   testDir: './tests',
@@ -22,14 +22,14 @@ export default defineConfig({
   retries: process.env.CI ? 0 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
+  /* Reporter to use. See https://playwright.dev */
   reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
+  /* Shared settings for all the projects below. See https://playwright.dev. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://127.0.0.1:3000',
 
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    /* Collect trace when retrying the failed test. See https://playwright.dev */
     trace: 'on-first-retry',
     
     // Jika tombol dicentang, paksa ambil screenshot selalu. Jika tidak, pakai bawaan Anda (only-on-failure).
