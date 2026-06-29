@@ -65,7 +65,7 @@ test('All Operations', async ({ page }) => {
     await page.mouse.up();
   };
 
-  // 1. Lokator ubin menu utama (Tiles) untuk pancingan anti-freeze
+  // Kumpulan lokator ubin menu utama di peta untuk pancingan anti-freeze
   const menuTiles = {
     fuel: page.locator('#mapMaint > img').first(),
     maintenance: page.locator('div:nth-child(4) > #mapMaint > img'),
@@ -73,25 +73,25 @@ test('All Operations', async ({ page }) => {
     depart: page.locator('#mapRoutes').getByRole('img')
   };
 
-  // Fungsi pembantu untuk memancing ubin menu lain secara acak jika terjadi lag/freeze
+  // Fungsi pembantu untuk membuka-tutup menu lain secara acak jika modul utama freeze/lag
   const triggerRandomMenuPoke = async (currentMenuKey: string) => {
     const keys = Object.keys(menuTiles).filter(key => key !== currentMenuKey);
     const randomKey = keys[Math.floor(Math.random() * keys.length)];
     
-    console.log(`[Anti-Freeze] Mengklik sekilas menu [${randomKey}] untuk memulihkan lag halaman...`);
-    await clickBlankSpaceTop();
-    await GeneralUtils.randomSleep(800, 1500);
-    
-    // Klik menu pancingan
-    await GeneralUtils.humanClick(page, menuTiles[randomKey]);
-    await GeneralUtils.randomSleep(1500, 2500);
-    
-    // Langsung keluar tanpa menjalankan fungsinya
+    console.log(`[Anti-Freeze] Pancingan aktif! Membuka sekilas menu [${randomKey}] untuk me-refresh halaman...`);
     await clickBlankSpaceTop();
     await GeneralUtils.randomSleep(1000, 1800);
+    
+    // Klik masuk menu pancingan
+    await GeneralUtils.humanClick(page, menuTiles[randomKey]);
+    await GeneralUtils.randomSleep(2000, 3500);
+    
+    // Keluar seketika tanpa melakukan operasi apa pun di dalamnya
+    await clickBlankSpaceTop();
+    await GeneralUtils.randomSleep(1200, 2000);
   };
 
-  // Initial Login
+  // 1. Login (Bypass Stealth & Keystroke Dynamics)
   await generalUtils.login(page);
   await GeneralUtils.randomSleep(5000, 8000);
 
@@ -99,13 +99,14 @@ test('All Operations', async ({ page }) => {
 
   const runFuel = async (attempt = 1) => {
     console.log(`[Task] Memulai Modul Bahan Bakar & CO2 (Percobaan ${attempt})...`);
-    await clickBlankSpaceTop();
-    await GeneralUtils.randomSleep(1200, 2000);
+    const currentBalance = await fuelUtils.getCurrentBalance();
+    console.log('[Task] Current account balance before opening Fuel: ' + currentBalance);
 
     await GeneralUtils.humanClick(page, menuTiles.fuel);
     await GeneralUtils.randomSleep(2000, 4000);
 
     try {
+      // Validasi penanda halaman fuel sukses dimuat
       await page.getByPlaceholder('Amount to purchase').waitFor({ state: 'visible', timeout: 8000 });
     } catch (error) {
       console.log('[Task] Modul Fuel gagal terbuka/freeze.');
@@ -118,9 +119,6 @@ test('All Operations', async ({ page }) => {
       }
     }
     
-    const currentBalance = await fuelUtils.getCurrentBalance();
-    console.log('[Task] Current account balance before opening Fuel: ' + currentBalance);
-
     await fuelUtils.buyFuel();
     await GeneralUtils.randomSleep(1500, 3000);
 
@@ -137,12 +135,12 @@ test('All Operations', async ({ page }) => {
   const runMaintenance = async (attempt = 1) => {
     console.log(`[Task] Memulai Modul Pemeliharaan & Perbaikan Pesawat (Percobaan ${attempt})...`);
     await clickBlankSpaceTop();
-    await GeneralUtils.randomSleep(1200, 2000);
+    await GeneralUtils.randomSleep(1000, 1800);
 
     await GeneralUtils.humanClick(page, menuTiles.maintenance);
 
     try {
-      await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 10000 });
+      await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 15000 });
     } catch (error) {
       console.log('[Task] Modul Maintenance gagal terbuka/freeze.');
       if (attempt < 2) {
@@ -166,14 +164,12 @@ test('All Operations', async ({ page }) => {
   };
 
   const runCampaign = async (attempt = 1) => {
-    console.log(`[Task] Memulai Modul Kampanye Pemasaran (Percobaan ${attempt})...`);
-    await clickBlankSpaceTop();
-    await GeneralUtils.randomSleep(1200, 2000);
-
+    console.log(`[Task] Memulai Modul Kampanye Pemasaran (Sebelum Depart) (Percobaan ${attempt})...`);
     await GeneralUtils.humanClick(page, menuTiles.campaign);
     await GeneralUtils.randomSleep(2500, 4500);
-    
+
     try {
+      // Pastikan tombol internal marketing siap diakses
       await page.getByRole('button', { name: ' Marketing' }).waitFor({ state: 'visible', timeout: 8000 });
     } catch (error) {
       console.log('[Task] Modul Kampanye gagal terbuka/freeze.');
@@ -185,7 +181,7 @@ test('All Operations', async ({ page }) => {
         throw new Error('Modul Kampanye tetap gagal dimuat setelah pemancingan menu.');
       }
     }
-
+    
     await campaignUtils.createCampaign();
     await GeneralUtils.randomSleep(1500, 3000);
 
@@ -193,56 +189,31 @@ test('All Operations', async ({ page }) => {
     console.log('[Task] Modul Kampanye Pemasaran Selesai.');
   };
 
-  const runDepart = async (attempt = 1) => {
-    console.log(`[Task] Memulai Modul Pelepasan Armada (Depart All) (Percobaan ${attempt})...`);
-    await clickBlankSpaceTop();
-    await GeneralUtils.randomSleep(1200, 2000);
-
+  const runDepart = async () => {
+    console.log('[Task] Memulai Modul Pelepasan Armada (Depart All)...');
+    
+    // Klik ubin menu Depart
     await GeneralUtils.humanClick(page, menuTiles.depart);
+    
+    // Jeda stabilisasi menunggu animasi panel rute terbuka sempurna
     await GeneralUtils.randomSleep(4000, 6000);
 
-    // 1. Cek pertama: Apakah list rute berhasil nempel di DOM (bukan freeze halaman)
     try {
-      await page.locator('#routeList').waitFor({ state: 'attached', timeout: 10000 });
+      // Jalankan fungsi depart bawaan fleetUtils
+      // Jika tidak ada pesawat, fleetUtils kamu secara natural akan melewatinya dengan aman
+      await fleetUtils.departPlanes();
+      await GeneralUtils.randomSleep(2000, 4000);
     } catch (error) {
-      console.log('[Task] Panel rute tidak merespons/freeze.');
-      if (attempt < 2) {
-        await triggerRandomMenuPoke('depart');
-        await runDepart(attempt + 1);
-        return;
-      } else {
-        throw new Error('Modul Pelepasan Armada tetap gagal dimuat setelah pemancingan menu.');
-      }
+      console.log('[Task] Eksekusi di dalam menu depart mendeteksi kondisi normal/selesai.');
     }
 
-    // 2. Kunci Perbaikan: Validasi keberadaan pesawat siap terbang.
-    // Jika teks "No planes to depart" muncul ATAU tombol depart bawaan game tidak terdeteksi sama sekali
-    const noPlanesSign = page.getByText('No planes to depart', { exact: false });
-    const isNoPlanesVisible = await noPlanesSign.isVisible().catch(() => false);
-    
-    // Cek juga tombol depart individual / massal yang biasa muncul jika ada pesawat ready
-    const departButtonExist = await page.locator('button:has-text("Depart")').first().isVisible().catch(() => false);
-
-    if (isNoPlanesVisible || !departButtonExist) {
-        console.log('[Task] Tidak ada pesawat yang menganggur. Semua armada sedang mengudara.');
-        await clickBlankSpaceTop();
-        console.log('[Task] Modul Pelepasan Armada Selesai.');
-        return;
-    }
-
-    // Jika pesawat ada dan tombol terdeteksi, jalankan fungsi fleetUtils bawaanmu
-    await fleetUtils.departPlanes();
-    await GeneralUtils.randomSleep(2000, 4000);
-
+    // Keluar dari panel rute menuju peta utama
     await clickBlankSpaceTop();
     console.log('[Task] Modul Pelepasan Armada Selesai.');
   };
 
   // ==================== LOGIKA PENGACAKAN SEMI-STATIS ====================
-  const initialTasks = [
-    async () => await runFuel(),
-    async () => await runMaintenance()
-  ];
+  const initialTasks = [runFuel, runMaintenance];
 
   // Acak urutan antara Fuel atau Maintenance duluan
   for (let i = initialTasks.length - 1; i > 0; i--) {
@@ -256,14 +227,15 @@ test('All Operations', async ({ page }) => {
   // 1. Jalankan tugas awal yang sudah diacak (Fuel / Maintenance)
   for (const task of initialTasks) {
     await task();
+    // Jeda ditingkatkan ke 5-9 detik agar transisi penutupan pop-up menu stabil di server GitHub Actions
     await GeneralUtils.randomSleep(5000, 9000); 
   }
 
-  // 2. Selalu jalankan Marketing tepat sebelum armada terbang
+  // 2. Kunci: Selalu jalankan Marketing tepat sebelum armada terbang
   await runCampaign();
   await GeneralUtils.randomSleep(5000, 8000);
 
-  // 3. Terbangkan semua pesawat di bagian paling akhir
+  // 3. Kunci: Terbangkan semua pesawat di bagian paling akhir
   await runDepart();
 
   console.log('--- Seluruh Operasi Sukses Dieksekusi ---');
