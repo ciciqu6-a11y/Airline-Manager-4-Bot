@@ -6,6 +6,9 @@ import { defineConfig, devices } from '@playwright/test';
  */
 // require('dotenv').config();
 
+// Deteksi apakah tombol "paksa_simpan_video" dicentang di GitHub Actions
+const isPaksaNonton = process.env.INPUT_PAKSA_SIMPAN_VIDEO === 'true';
+
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
@@ -28,8 +31,12 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
-    video: 'retain-on-failure'
+    
+    // Jika tombol dicentang, paksa ambil screenshot selalu. Jika tidak, pakai bawaan Anda (only-on-failure).
+    screenshot: isPaksaNonton ? 'on' : 'only-on-failure',
+    
+    // Jika tombol dicentang, paksa rekam video selalu agar bisa ditonton. Jika tidak, pakai bawaan Anda (retain-on-failure).
+    video: isPaksaNonton ? 'on' : 'retain-on-failure'
   },
 
   /* Configure projects for major browsers */
@@ -67,3 +74,4 @@ export default defineConfig({
   //   reuseExistingServer: !process.env.CI,
   // },
 });
+
