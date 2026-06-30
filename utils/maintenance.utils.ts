@@ -8,45 +8,10 @@ export class MaintenanceUtils {
         this.page = page;
     }
 
-    /**
-     * Menyimulasi pergerakan kursor mouse yang halus dari posisi saat ini ke koordinat target.
-     * Menggunakan konsep interpolasi linear dengan sedikit noise acak agar lintasannya tidak lurus kaku.
-     */
-    private async humanMouseMove(targetX: number, targetY: number) {
-        // Ambil ukuran viewport saat ini sebagai perkiraan posisi awal acak jika kursor belum terinisiasi
-        const steps = Math.floor(Math.random() * 5) + 5; // 5-10 langkah pergerakan peluncuran kursor
-        
-        // Skenario kasaran pergerakan mouse dari posisi sekitar layar saat ini
-        // Playwright tidak punya API untuk getMousePosition, jadi kita simulasikan koordinat acak ke target
-        let currentX = targetX + (Math.random() * 200 - 100);
-        let currentY = targetY + (Math.random() * 200 - 100);
-
-        for (let i = 1; i <= steps; i++) {
-            const t = i / steps;
-            // Rumus kelengkungan fana agar gerakan tidak garis lurus matematika sempurna
-            const noiseX = (Math.random() - 0.5) * 5;
-            const noiseY = (Math.random() - 0.5) * 5;
-            
-            const x = currentX + (targetX - currentX) * t + noiseX;
-            const y = currentY + (targetY - currentY) * t + noiseY;
-
-            await this.page.mouse.move(x, y);
-            await this.page.waitForTimeout(Math.floor(Math.random() * 20) + 10); // Jeda mikro antar koordinat
-        }
-        
-        // Pastikan kursor benar-benar mendarat tepat di titik akhir
-        await this.page.mouse.move(targetX, targetY);
-    }
-
     private async openPlanPanel() {
         const planButton = this.page.getByRole('button', { name: ' Plan' });
-        await planButton.waitFor({ state: 'visible', timeout: 15000 });
-        
-        const box = await planButton.boundingBox();
-        if (box) {
-            await this.humanMouseMove(box.x + box.width / 2, box.y + box.height / 2);
-        }
-        await GeneralUtils.humanClick(this.page, planButton);
+        // Menggunakan fungsi moveAndClick terpusat yang meluncur halus secara acak
+        await GeneralUtils.moveAndClick(this.page, planButton);
     }
 
     /**
@@ -108,18 +73,17 @@ export class MaintenanceUtils {
     }
 
     /**
-     * Fitur baru: Melakukan scroll balik ke atas secara penuh (mentok) secara bertahap.
+     * Melakukan scroll balik ke atas secara penuh (mentok) secara bertahap.
      */
     private async scrollBackToTop() {
         console.log("Melakukan scroll balik ke atas secara manusiawi...");
-        // Tarik roda mouse ke atas (nilai negatif) beberapa kali dengan sentakan acak
-        const upSteps = Math.floor(Math.random() * 3) + 4; // 4 sampai 6 kali usapan ke atas
+        const upSteps = Math.floor(Math.random() * 3) + 4; 
         for (let k = 0; k < upSteps; k++) {
-            const scrollAmount = -(Math.floor(Math.random() * 200) + 200); // mengusap ke atas sekitar -200px sampai -400px
+            const scrollAmount = -(Math.floor(Math.random() * 200) + 200); 
             await this.page.mouse.wheel(0, scrollAmount);
-            await GeneralUtils.randomSleep(100, 250); // jeda singkat antar usapan
+            await GeneralUtils.randomSleep(100, 250); 
         }
-        await GeneralUtils.randomSleep(800, 1500); // Berhenti sejenak setelah sampai di paling atas
+        await GeneralUtils.randomSleep(800, 1500); 
     }
 
     public async repairPlanes() {
@@ -127,24 +91,28 @@ export class MaintenanceUtils {
         await GeneralUtils.randomSleep(1000, 2000);
         
         const bulkRepairButton = this.page.getByRole('button', { name: ' Bulk repair' });
-        const boxRepair = await bulkRepairButton.boundingBox();
-        if (boxRepair) {
-            await this.humanMouseMove(boxRepair.x + boxRepair.width / 2, boxRepair.y + boxRepair.height / 2);
-        }
-        await GeneralUtils.humanClick(this.page, bulkRepairButton);
-        await GeneralUtils.randomSleep(1000, 2000);
+        await GeneralUtils.moveAndClick(this.page, bulkRepairButton);
+        await GeneralUtils.randomSleep(1200, 2200);
         
-        await this.page.locator('#repairPct').selectOption('30');
+        // --- 🚀 PERBAIKAN FITUR DROP-DOWN SELECTION (ANTI-ROBOTIK) ---
+        const repairSelect = this.page.locator('#repairPct');
+        
+        // 1. Manusia menggerakkan mouse ke kotak drop-down lalu mengkliknya untuk membuka menu pilihan
+        await GeneralUtils.moveAndClick(this.page, repairSelect);
+        
+        // 2. Jeda simulasi psikologis mata manusia mencari letak opsi angka "30" di dalam daftar (0.7 - 1.5 detik)
+        await GeneralUtils.randomSleep(700, 1500);
+        
+        // 3. Eksekusi pemilihan opsi '30' secara fisik
+        await repairSelect.selectOption('30');
+        
+        // 4. Jeda setelah menutup menu drop-down sebelum melanjutkan ke tombol submit berikutnya
         await GeneralUtils.randomSleep(1000, 2500);
         
         const noPlaneExists = await this.page.getByText('There are no aircraft worn to').isVisible();
         if (!noPlaneExists) {
             const planBulkRepairButton = this.page.getByRole('button', { name: 'Plan bulk repair' });
-            const boxPlanRepair = await planBulkRepairButton.boundingBox();
-            if (boxPlanRepair) {
-                await this.humanMouseMove(boxPlanRepair.x + boxPlanRepair.width / 2, boxPlanRepair.y + boxPlanRepair.height / 2);
-            }
-            await GeneralUtils.humanClick(this.page, planBulkRepairButton);
+            await GeneralUtils.moveAndClick(this.page, planBulkRepairButton);
         }
     }
 
@@ -153,16 +121,12 @@ export class MaintenanceUtils {
         await GeneralUtils.randomSleep(1000, 2000);
         
         const bulkCheckButton = this.page.getByRole('button', { name: ' Bulk check' });
-        const boxCheck = await bulkCheckButton.boundingBox();
-        if (boxCheck) {
-            await this.humanMouseMove(boxCheck.x + boxCheck.width / 2, boxCheck.y + boxCheck.height / 2);
-        }
-        await GeneralUtils.humanClick(this.page, bulkCheckButton);
+        await GeneralUtils.moveAndClick(this.page, bulkCheckButton);
         
         await GeneralUtils.randomSleep(3000, 4500);
         
         let clicked = false;
-        let didScroll = false; // Flag untuk mencatat apakah script pernah melakukan scroll ke bawah
+        let didScroll = false; 
 
         const dangerPlaneCards = this.page.locator('.bg-white:has(.text-danger)');
         const dangerChecksExists = await dangerPlaneCards.first().isVisible();
@@ -173,26 +137,19 @@ export class MaintenanceUtils {
             for (let i = 0; i < count; i++) {
                 const cardElement = dangerPlaneCards.nth(i);
 
-                // Cek koordinat untuk menentukan apakah butuh scroll
                 const boxBefore = await cardElement.boundingBox();
                 const viewport = this.page.viewportSize();
                 if (boxBefore && viewport && (boxBefore.y + boxBefore.height > viewport.height || boxBefore.y < 0)) {
-                    didScroll = true; // Tandai bahwa kita terpaksa melakukan scroll ke area bawah
+                    didScroll = true; 
                 }
 
-                // Jalankan human scroll dinamis
                 await this.humanScrollToElement(cardElement);
                 
                 await cardElement.scrollIntoViewIfNeeded();
                 await GeneralUtils.randomSleep(300, 600);
 
-                // Gerakkan kursor mouse ke kartu pesawat secara halus sebelum mengklik
-                const boxCard = await cardElement.boundingBox();
-                if (boxCard) {
-                    await this.humanMouseMove(boxCard.x + boxCard.width / 2, boxCard.y + boxCard.height / 2);
-                }
-
-                await GeneralUtils.humanClick(this.page, cardElement);
+                // Gerakkan kursor dan klik kartu pesawat menggunakan fungsi terpusat yang aman
+                await GeneralUtils.moveAndClick(this.page, cardElement);
                 clicked = true;
 
                 await GeneralUtils.randomSleep(900, 1800);
@@ -200,22 +157,14 @@ export class MaintenanceUtils {
         }
 
         if (clicked) {
-            // --- 🚀 FITUR SCROLL BALIK KE ATAS BERAKSI ---
-            // Hanya lakukan scroll balik ke atas jika sebelumnya script pernah melakukan scroll ke bawah
             if (didScroll) {
                 await this.scrollBackToTop();
             } else {
                 await GeneralUtils.randomSleep(1000, 2000);
             }
             
-            // Gerakkan kursor ke tombol final 'Plan bulk check' yang kini sudah kembali terlihat di atas
             const planBulkCheckButton = this.page.getByRole('button', { name: 'Plan bulk check' });
-            const boxFinal = await planBulkCheckButton.boundingBox();
-            if (boxFinal) {
-                await this.humanMouseMove(boxFinal.x + boxFinal.width / 2, boxFinal.y + boxFinal.height / 2);
-            }
-
-            await GeneralUtils.humanClick(this.page, planBulkCheckButton);
+            await GeneralUtils.moveAndClick(this.page, planBulkCheckButton);
         }
     }
 }
