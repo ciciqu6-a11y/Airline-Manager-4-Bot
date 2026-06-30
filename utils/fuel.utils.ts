@@ -269,5 +269,18 @@ export class FuelUtils {
         // Kondisi darurat jika emisi kritis
         else if(curHolding < 1000000 && curCo2Price < 180) {
             await this.moveAndClick(purchaseInput);
-            await GeneralUtils.randomSleep(
-                
+            await GeneralUtils.randomSleep(500, 1200);
+            
+            await purchaseInput.press('Control+a');
+            await GeneralUtils.randomSleep(400, 900);
+            
+            await purchaseInput.pressSequentially('1000000', { delay: Math.floor(Math.random() * 80) + 40 });
+            await GeneralUtils.randomSleep(1000, 2000);
+            
+            const purchaseButton = this.page.getByRole('button', { name: ' Purchase' });
+            await this.moveAndClick(purchaseButton);
+
+            console.log('Bought Co2 Successfully! Amount of co2 bought: 1000000 (Emergency Buy)');
+        }
+    }
+}
