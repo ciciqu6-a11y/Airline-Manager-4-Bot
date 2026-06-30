@@ -8,10 +8,35 @@ export class MaintenanceUtils {
         this.page = page;
     }
 
+    /**
+     * Helper privat untuk membuka panel perencanaan.
+     * Menggunakan moveAndClick global untuk menjamin lintasan melengkung dan pendaratan acak.
+     */
     private async openPlanPanel() {
         const planButton = this.page.getByRole('button', { name: ' Plan' });
-        // Menggunakan fungsi moveAndClick terpusat yang meluncur halus secara acak
+        await planButton.waitFor({ state: 'visible', timeout: 15000 });
+        
+        // Panggil utilitas terpusat untuk simulasi gerak dan klik manusiawi
         await GeneralUtils.moveAndClick(this.page, planButton);
+    }
+
+    /**
+     * 🛠️ FITUR BARU: SELEKSI DROP-DOWN MANUSIAWI (ANTI-TELEPORTASI)
+     * Menyimulasi tindakan manusia memilih opsi: Bergerak ke kotak drop-down, mengkliknya,
+     * menunggu panel opsi muncul di layar (jeda mata membaca), lalu memilih opsi target.
+     */
+    private async moveAndSelectOption(selectLocator: any, optionValue: string) {
+        // 1. Gerakkan mouse secara halus dan klik kotak drop-down utama untuk membukanya
+        await GeneralUtils.moveAndClick(this.page, selectLocator);
+        
+        // 2. ⏱️ JEDA PSIKOLOGIS: Meniru waktu yang dibutuhkan mata dan otak manusia untuk mencari opsi '30'
+        await GeneralUtils.randomSleep(700, 1400); 
+
+        // 3. Eksekusi pemilihan opsi secara sinkron setelah UI-nya terpicu terbuka secara fisik
+        await selectLocator.selectOption(optionValue);
+        
+        // Jeda sesaat seolah-olah manusia melepas fokus dari menu drop-down tersebut
+        await GeneralUtils.randomSleep(500, 900);
     }
 
     /**
@@ -77,7 +102,7 @@ export class MaintenanceUtils {
      */
     private async scrollBackToTop() {
         console.log("Melakukan scroll balik ke atas secara manusiawi...");
-        const upSteps = Math.floor(Math.random() * 3) + 4; 
+        const upSteps = Math.floor(Math.random() * 3) + 4; // 4 sampai 6 kali usapan ke atas
         for (let k = 0; k < upSteps; k++) {
             const scrollAmount = -(Math.floor(Math.random() * 200) + 200); 
             await this.page.mouse.wheel(0, scrollAmount);
@@ -90,27 +115,20 @@ export class MaintenanceUtils {
         await this.openPlanPanel();
         await GeneralUtils.randomSleep(1000, 2000);
         
+        // Upgrade tombol bulk repair menggunakan moveAndClick terpusat
         const bulkRepairButton = this.page.getByRole('button', { name: ' Bulk repair' });
         await GeneralUtils.moveAndClick(this.page, bulkRepairButton);
         await GeneralUtils.randomSleep(1200, 2200);
         
-        // --- 🚀 PERBAIKAN FITUR DROP-DOWN SELECTION (ANTI-ROBOTIK) ---
-        const repairSelect = this.page.locator('#repairPct');
-        
-        // 1. Manusia menggerakkan mouse ke kotak drop-down lalu mengkliknya untuk membuka menu pilihan
-        await GeneralUtils.moveAndClick(this.page, repairSelect);
-        
-        // 2. Jeda simulasi psikologis mata manusia mencari letak opsi angka "30" di dalam daftar (0.7 - 1.5 detik)
-        await GeneralUtils.randomSleep(700, 1500);
-        
-        // 3. Eksekusi pemilihan opsi '30' secara fisik
-        await repairSelect.selectOption('30');
-        
-        // 4. Jeda setelah menutup menu drop-down sebelum melanjutkan ke tombol submit berikutnya
-        await GeneralUtils.randomSleep(1000, 2500);
+        // --- 🚀 PROSES SELEKSI OPSI '30' SECARA HUMAN-LIKE BERAKSI ---
+        console.log("Memilih ambang batas perbaikan 30% dengan jeda pencarian visual...");
+        const repairPercentSelect = this.page.locator('#repairPct');
+        await this.moveAndSelectOption(repairPercentSelect, '30');
+        await GeneralUtils.randomSleep(1200, 2500);
         
         const noPlaneExists = await this.page.getByText('There are no aircraft worn to').isVisible();
         if (!noPlaneExists) {
+            // Upgrade tombol final perbaikan massal menggunakan moveAndClick terpusat
             const planBulkRepairButton = this.page.getByRole('button', { name: 'Plan bulk repair' });
             await GeneralUtils.moveAndClick(this.page, planBulkRepairButton);
         }
@@ -120,6 +138,7 @@ export class MaintenanceUtils {
         await this.openPlanPanel();
         await GeneralUtils.randomSleep(1000, 2000);
         
+        // Upgrade tombol bulk check menggunakan moveAndClick terpusat
         const bulkCheckButton = this.page.getByRole('button', { name: ' Bulk check' });
         await GeneralUtils.moveAndClick(this.page, bulkCheckButton);
         
@@ -144,15 +163,14 @@ export class MaintenanceUtils {
                 }
 
                 await this.humanScrollToElement(cardElement);
-                
                 await cardElement.scrollIntoViewIfNeeded();
-                await GeneralUtils.randomSleep(300, 600);
+                await GeneralUtils.randomSleep(400, 800);
 
-                // Gerakkan kursor dan klik kartu pesawat menggunakan fungsi terpusat yang aman
+                // Gerakkan kursor ke kartu pesawat secara halus dan klik secara acak di area aman kartu
                 await GeneralUtils.moveAndClick(this.page, cardElement);
                 clicked = true;
 
-                await GeneralUtils.randomSleep(900, 1800);
+                await GeneralUtils.randomSleep(1000, 2000);
             }
         }
 
@@ -163,6 +181,7 @@ export class MaintenanceUtils {
                 await GeneralUtils.randomSleep(1000, 2000);
             }
             
+            // Upgrade tombol final bulk check menggunakan moveAndClick terpusat
             const planBulkCheckButton = this.page.getByRole('button', { name: 'Plan bulk check' });
             await GeneralUtils.moveAndClick(this.page, planBulkCheckButton);
         }
