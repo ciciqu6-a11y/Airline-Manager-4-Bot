@@ -10,7 +10,7 @@ import * as path from 'path';
 require('dotenv').config();
 
 test('All Operations', async ({ page }) => {
-  // Timeout 3 menit karena simulasi ketikan dan delay manusia butuh waktu lebih lama
+  // Timeout 3 menit karena simulasi gerakan kursor dan delay manusia butuh waktu lebih lama
   test.setTimeout(180000);
 
   // ==============================================================
@@ -53,15 +53,21 @@ test('All Operations', async ({ page }) => {
   const maintenanceUtils = new MaintenanceUtils(page);
   // End //
 
-  // Fungsi klik area kosong mendatar di bagian atas layar untuk menutup menu/peta
+  /**
+   * FIX KOREKSI 1: Mengubah penutupan menu area kosong atas layar menjadi human-like.
+   * Menggunakan fungsi pergerakan mouse melengkung dan mengacak durasi klik (bukan teleportasi kaku).
+   */
   const clickBlankSpaceTop = async () => {
     console.log('Mengeklik area kosong di atas layar untuk menutup menu...');
     const randomX = Math.floor(Math.random() * (600 - 200 + 1) + 200);
     const randomY = Math.floor(Math.random() * (30 - 15 + 1) + 15);
     
-    await page.mouse.move(randomX, randomY, { steps: 6 });
+    // Gunakan fungsi mouse melengkung dari GeneralUtils
+    await GeneralUtils.humanMouseMove(page, randomX, randomY);
+    await GeneralUtils.randomSleep(150, 400); // Jeda sesaat ancang-ancang sebelum ketuk layar
+    
     await page.mouse.down();
-    await GeneralUtils.randomSleep(80, 180);
+    await GeneralUtils.randomSleep(80, 180); // Durasi tahan klik bervariasi
     await page.mouse.up();
   };
 
@@ -82,8 +88,8 @@ test('All Operations', async ({ page }) => {
     await clickBlankSpaceTop();
     await GeneralUtils.randomSleep(1000, 1800);
     
-    // Klik masuk menu pancingan
-    await GeneralUtils.humanClick(page, menuTiles[randomKey]);
+    // FIX KOREKSI 2: Upgrade klik ubin pancingan menjadi moveAndClick yang acak area amannya
+    await GeneralUtils.moveAndClick(page, menuTiles[randomKey]);
     await GeneralUtils.randomSleep(2000, 3500);
     
     // Keluar seketika tanpa melakukan operasi apa pun di dalamnya
@@ -91,7 +97,7 @@ test('All Operations', async ({ page }) => {
     await GeneralUtils.randomSleep(1200, 2000);
   };
 
-  // 1. Login (Bypass Stealth & Keystroke Dynamics)
+  // 1. Login (Bypass Stealth & Keystroke Dynamics terpusat)
   await generalUtils.login(page);
   await GeneralUtils.randomSleep(5000, 8000);
 
@@ -102,7 +108,8 @@ test('All Operations', async ({ page }) => {
     const currentBalance = await fuelUtils.getCurrentBalance();
     console.log('[Task] Current account balance before opening Fuel: ' + currentBalance);
 
-    await GeneralUtils.humanClick(page, menuTiles.fuel);
+    // FIX KOREKSI 3: Buka ubin menu Fuel dengan pergerakan kursor melengkung acak
+    await GeneralUtils.moveAndClick(page, menuTiles.fuel);
     await GeneralUtils.randomSleep(2000, 4000);
 
     try {
@@ -122,7 +129,9 @@ test('All Operations', async ({ page }) => {
     await fuelUtils.buyFuel();
     await GeneralUtils.randomSleep(1500, 3000);
 
-    await GeneralUtils.humanClick(page, page.getByRole('button', { name: ' Co2' }));
+    // FIX KOREKSI 4: Klik tab CO2 secara human-like
+    const co2TabButton = page.getByRole('button', { name: ' Co2' });
+    await GeneralUtils.moveAndClick(page, co2TabButton);
     await GeneralUtils.randomSleep(2000, 4000);
     
     await fuelUtils.buyCo2();
@@ -137,7 +146,8 @@ test('All Operations', async ({ page }) => {
     await clickBlankSpaceTop();
     await GeneralUtils.randomSleep(1000, 1800);
 
-    await GeneralUtils.humanClick(page, menuTiles.maintenance);
+    // FIX KOREKSI 5: Buka ubin menu Maintenance secara human-like
+    await GeneralUtils.moveAndClick(page, menuTiles.maintenance);
 
     try {
       await page.getByRole('button', { name: ' Plan' }).waitFor({ state: 'visible', timeout: 15000 });
@@ -165,7 +175,9 @@ test('All Operations', async ({ page }) => {
 
   const runCampaign = async (attempt = 1) => {
     console.log(`[Task] Memulai Modul Kampanye Pemasaran (Sebelum Depart) (Percobaan ${attempt})...`);
-    await GeneralUtils.humanClick(page, menuTiles.campaign);
+    
+    // FIX KOREKSI 6: Buka ubin menu Kampanye secara human-like
+    await GeneralUtils.moveAndClick(page, menuTiles.campaign);
     await GeneralUtils.randomSleep(2500, 4500);
 
     try {
@@ -192,15 +204,14 @@ test('All Operations', async ({ page }) => {
   const runDepart = async () => {
     console.log('[Task] Memulai Modul Pelepasan Armada (Depart All)...');
     
-    // Klik ubin menu Depart
-    await GeneralUtils.humanClick(page, menuTiles.depart);
+    // FIX KOREKSI 7: Klik ubin menu Depart dengan gerakan mouse melengkung
+    await GeneralUtils.moveAndClick(page, menuTiles.depart);
     
     // Jeda stabilisasi menunggu animasi panel rute terbuka sempurna
     await GeneralUtils.randomSleep(4000, 6000);
 
     try {
-      // Jalankan fungsi depart bawaan fleetUtils
-      // Jika tidak ada pesawat, fleetUtils kamu secara natural akan melewatinya dengan aman
+      // Jalankan fungsi depart bawaan fleetUtils (yang di dalamnya sudah di-upgrade)
       await fleetUtils.departPlanes();
       await GeneralUtils.randomSleep(2000, 4000);
     } catch (error) {
@@ -244,3 +255,4 @@ test('All Operations', async ({ page }) => {
   await GeneralUtils.randomSleep(3000, 5000);
   page.close();
 });
+
